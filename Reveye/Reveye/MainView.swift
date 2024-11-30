@@ -55,6 +55,7 @@ struct MainView: View {
 }
 
 struct BluetoothSearchView: View {
+    @ObservedObject var bluetoothManager = BluetoothManager()
     @Binding var showBluetoothSearch: Bool // State to dismiss the pop-up
     let devices = ["Device 1", "Device 2", "Device 3"] // Sample devices
     
@@ -76,36 +77,45 @@ struct BluetoothSearchView: View {
                     .shadow(color: .black.opacity(0.7), radius: 3, x: 0, y: 1)
                     .padding(.top, 20)
                 
-                // List of Devices
-                ScrollView {
-                    VStack(spacing: 13) {
-                        ForEach(devices.indices, id: \.self) { index in
-                                Button(action: {
-                                    showBluetoothSearch = false
-                                    print("Selected device: \(devices[index])")
-                                }) {
-                                    HStack {
-                                        Text(devices[index])
-                                            .font(.system(size: 18, weight: .medium))
-                                            .foregroundColor(.white)
-                                        Spacer() // Align text to the leading side
+                if bluetoothManager.peripherals.isEmpty {
+                                Text("No devices found")
+                                    .foregroundColor(.gray)
+                                    .padding()
+                            } else {
+                                ScrollView {
+                                    VStack(spacing: 10) {
+                                        ForEach(Array(bluetoothManager.peripherals.enumerated()), id: \.element.identifier) { index, peripheral in
+                                                Button(action: {
+                                                    print("Selected device: \(peripheral.name ?? "Unknown Device")")
+                                                    showBluetoothSearch = false
+                                                    bluetoothManager.stopScanning()
+                                                }) {
+                                                    HStack {
+                                                        Text(peripheral.name ?? "Unknown Device")
+                                                            .font(.system(size: 18, weight: .medium))
+                                                            .foregroundColor(.white)
+                                                        Spacer()
+                                                    }
+                                                    .padding(.vertical, 5)
+                                                    
+                                                }
+                                                
+                                                // Add divider only if it's not the last item
+                                                if index < bluetoothManager.peripherals.count - 1 {
+                                                    Divider()
+                                                        .background(Color.white)
+                                                        .padding(.horizontal, 3)
+                                                }
+                                            }
                                     }
-                                    
-                                }
-                                
-                                if index < devices.count - 1 {
-                                    Divider()
-                                        .background(Color.white)
-                                        .padding(.horizontal, 3)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.white.opacity(0.2))
+                                    .cornerRadius(15)
                                 }
                             }
-                        
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.white.opacity(0.2))
-                    .cornerRadius(15)
-                }
+                
+               
                
                 Spacer()
                 
@@ -128,8 +138,15 @@ struct BluetoothSearchView: View {
             .padding(.horizontal, 20)
             
         }
+        .onAppear {
+                    bluetoothManager.startScanning()
+                }
+                .onDisappear {
+                    bluetoothManager.stopScanning()
+                }
         
     }
+        
 }
 
 struct StartStopButton: View {
