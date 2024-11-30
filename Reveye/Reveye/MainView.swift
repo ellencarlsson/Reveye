@@ -9,7 +9,8 @@ import SwiftUI
 
 struct MainView: View {
     @State private var isBluetoothConnected = false
-        @State private var isRunning = false
+    @State private var isRunning = false
+    @State private var showBluetoothSearch = true
     
     var body: some View {
         ZStack {
@@ -36,7 +37,7 @@ struct MainView: View {
             
             VStack (){
                 Spacer()
-                BluetoothButton(isBluetoothConnected: $isBluetoothConnected)
+                BluetoothButton(isBluetoothConnected: $isBluetoothConnected, showBluetoothSearch: $showBluetoothSearch)
                     .padding(.bottom, 20)
                 
                 StartStopButton(isRunning: $isRunning, isBluetoothConnected: isBluetoothConnected)
@@ -47,6 +48,87 @@ struct MainView: View {
             .padding(.horizontal)
             
         }
+        .sheet(isPresented: $showBluetoothSearch) {
+            BluetoothSearchView(showBluetoothSearch: $showBluetoothSearch)
+        }
+    }
+}
+
+struct BluetoothSearchView: View {
+    @Binding var showBluetoothSearch: Bool // State to dismiss the pop-up
+    let devices = ["Device 1", "Device 2", "Device 3"] // Sample devices
+    
+    var body: some View {
+        ZStack {
+            Image("bluetooth-background")
+                .resizable()
+                .edgesIgnoringSafeArea(.all)
+            
+            
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 20) {
+                // Title
+                Text("Find Reveye Device")
+                    .font(.custom("Georgia", size: 30))
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.7), radius: 3, x: 0, y: 1)
+                    .padding(.top, 20)
+                
+                // List of Devices
+                ScrollView {
+                    VStack(spacing: 13) {
+                        ForEach(devices.indices, id: \.self) { index in
+                                Button(action: {
+                                    showBluetoothSearch = false
+                                    print("Selected device: \(devices[index])")
+                                }) {
+                                    HStack {
+                                        Text(devices[index])
+                                            .font(.system(size: 18, weight: .medium))
+                                            .foregroundColor(.white)
+                                        Spacer() // Align text to the leading side
+                                    }
+                                    
+                                }
+                                
+                                if index < devices.count - 1 {
+                                    Divider()
+                                        .background(Color.white)
+                                        .padding(.horizontal, 3)
+                                }
+                            }
+                        
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(15)
+                }
+               
+                Spacer()
+                
+                // Close Button
+                Button(action: {
+                    showBluetoothSearch = false
+                }, label: {
+                    Text("Close")
+                        .font(.system(size: 30, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding()
+                        .kerning(2)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(15)
+                })
+                
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, 20)
+            
+        }
+        
     }
 }
 
@@ -82,10 +164,11 @@ struct StartStopButton: View {
 
 struct BluetoothButton: View {
     @Binding var isBluetoothConnected: Bool
+    @Binding var showBluetoothSearch: Bool
     
     var body: some View {
         Button(action: {
-            isBluetoothConnected.toggle()
+            showBluetoothSearch.toggle()
         }, label: {
             HStack {
                 Image("bluetooth")
@@ -109,6 +192,8 @@ struct BluetoothButton: View {
 }
 
 let natureGreen = Color(red: 169/255, green: 233/255, blue: 76/255).opacity(0.6)
+
+let darkGreen = Color(red: 34/255, green: 51/255, blue: 26/255)
 
 
 struct Background: View {
