@@ -45,17 +45,10 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate {
     func stopScanning() {
         centralManager.stopScan()
     }
-
-    /*func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-        if !peripherals.contains(peripheral) {
-            peripherals.append(peripheral)
-        }
-    }*/
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         if !peripherals.contains(where: { $0.identifier == peripheral.identifier }) {
             peripherals.append(peripheral)
-            print("Discovered device: \(peripheral.name ?? "Unknown Device")")
         }
     }
 

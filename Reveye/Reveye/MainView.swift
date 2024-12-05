@@ -10,7 +10,8 @@ import SwiftUI
 struct MainView: View {
     @State private var isBluetoothConnected = false
     @State private var isRunning = false
-    @State private var showBluetoothSearch = true
+    @State private var showBluetoothSearch = false
+    @State private var selectedDevice = ""
     
     var body: some View {
         ZStack {
@@ -37,10 +38,10 @@ struct MainView: View {
             
             VStack (){
                 Spacer()
-                BluetoothButton(isBluetoothConnected: $isBluetoothConnected, showBluetoothSearch: $showBluetoothSearch)
+                BluetoothButton(isBluetoothConnected: $isBluetoothConnected, showBluetoothSearch: $showBluetoothSearch, selectedDevice: $selectedDevice)
                     .padding(.bottom, 20)
                 
-                StartStopButton(isRunning: $isRunning, isBluetoothConnected: isBluetoothConnected)
+                StartStopButton(isRunning: $isRunning, isBluetoothConnected: selectedDevice == "" ? false : true)
                 
                 
             }
@@ -49,7 +50,7 @@ struct MainView: View {
             
         }
         .sheet(isPresented: $showBluetoothSearch) {
-            BluetoothSearchView(showBluetoothSearch: $showBluetoothSearch)
+            BluetoothSearchView(showBluetoothSearch: $showBluetoothSearch, selectedDevice: $selectedDevice)
         }
     }
 }
@@ -57,7 +58,7 @@ struct MainView: View {
 struct BluetoothSearchView: View {
     @ObservedObject var bluetoothManager = BluetoothManager()
     @Binding var showBluetoothSearch: Bool // State to dismiss the pop-up
-    let devices = ["Device 1", "Device 2", "Device 3"] // Sample devices
+    @Binding var selectedDevice: String
     
     var body: some View {
         ZStack {
@@ -86,9 +87,9 @@ struct BluetoothSearchView: View {
                                     VStack(spacing: 10) {
                                         ForEach(Array(bluetoothManager.peripherals.enumerated()), id: \.element.identifier) { index, peripheral in
                                                 Button(action: {
-                                                    print("Selected device: \(peripheral.name ?? "Unknown Device")")
                                                     showBluetoothSearch = false
                                                     bluetoothManager.stopScanning()
+                                                    selectedDevice = peripheral.name ?? "Unknown Device"
                                                 }) {
                                                     HStack {
                                                         Text(peripheral.name ?? "Unknown Device")
@@ -100,7 +101,6 @@ struct BluetoothSearchView: View {
                                                     
                                                 }
                                                 
-                                                // Add divider only if it's not the last item
                                                 if index < bluetoothManager.peripherals.count - 1 {
                                                     Divider()
                                                         .background(Color.white)
@@ -182,6 +182,7 @@ struct StartStopButton: View {
 struct BluetoothButton: View {
     @Binding var isBluetoothConnected: Bool
     @Binding var showBluetoothSearch: Bool
+    @Binding var selectedDevice: String
     
     var body: some View {
         Button(action: {
@@ -193,8 +194,8 @@ struct BluetoothButton: View {
                     .scaledToFit()
                     .frame(width: 30, height: 30)
                     .foregroundColor(.white)
-                Text(isBluetoothConnected ? "Reveye device connected" : "No Reveye device connected")
-                    .font(.system(size: 20, weight: .semibold))
+                Text(selectedDevice != "" ? selectedDevice : "No Reveye device connected")
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                     .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
                 Spacer()
