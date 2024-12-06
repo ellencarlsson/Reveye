@@ -56,7 +56,7 @@ struct MainView: View {
 }
 
 struct BluetoothSearchView: View {
-    @ObservedObject var bluetoothManager = BluetoothManager()
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
     @Binding var showBluetoothSearch: Bool // State to dismiss the pop-up
     @Binding var selectedDevice: String
     
@@ -90,9 +90,12 @@ struct BluetoothSearchView: View {
                                                     showBluetoothSearch = false
                                                     bluetoothManager.stopScanning()
                                                     selectedDevice = peripheral.name ?? "Unknown Device"
+                                                    bluetoothManager.connectToPeripheral(peripheral)
+                                                    
                                                 }) {
                                                     HStack {
                                                         Text(peripheral.name ?? "Unknown Device")
+                                                            
                                                             .font(.system(size: 18, weight: .medium))
                                                             .foregroundColor(.white)
                                                         Spacer()
@@ -152,9 +155,18 @@ struct BluetoothSearchView: View {
 struct StartStopButton: View {
     @Binding var isRunning: Bool
     var isBluetoothConnected: Bool
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
     
     var body: some View {
         Button(action: {
+            if !isRunning {
+                print("nu är jag igång")
+                bluetoothManager.sendStartCommand()
+            } else {
+                print("nu är jag inte igång")
+                
+            }
+            
             isRunning.toggle()
         }, label: {
             HStack {
