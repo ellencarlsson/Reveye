@@ -35,6 +35,9 @@ def start_bluetooth():
     print("Creating GATT application...")
     app = Application(bus)
 
+    # Reset Bluetooth adapter before enabling advertising
+    reset_bluetooth_adapter()
+
     # Add GATT services
     service = Service(bus, 0, app)
     characteristic = Characteristic(bus, 0, service)
@@ -45,3 +48,16 @@ def start_bluetooth():
     print("Starting main event loop...")
     mainloop = GLib.MainLoop()
     mainloop.run()
+
+
+    
+
+def reset_bluetooth_adapter():
+    try:
+        print("Resetting Bluetooth adapter...")
+        subprocess.run(["sudo", "hciconfig", "hci0", "down"], check=True)
+        subprocess.run(["sudo", "hciconfig", "hci0", "up"], check=True)
+        print("Bluetooth adapter reset successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error resetting Bluetooth adapter: {e}")
+
