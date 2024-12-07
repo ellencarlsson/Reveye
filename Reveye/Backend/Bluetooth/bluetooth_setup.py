@@ -7,7 +7,7 @@ import subprocess  # For enabling advertising
 def enable_advertising():
     """Enable BLE advertising and discoverability."""
     bus = dbus.SystemBus()
-    adapter_path = "/org/bluez/hci0"
+    adapter_path = "/org/bluez/hci0"  
 
     # Get the adapter object
     adapter = dbus.Interface(bus.get_object("org.bluez", adapter_path), "org.freedesktop.DBus.Properties")
