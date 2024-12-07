@@ -16,19 +16,23 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     private var centralManager: CBCentralManager!
     private var connectedPeripheral: CBPeripheral?
     private var writeCharacteristic: CBCharacteristic?
+    
+    private let SERVICE_UUID = "DA306E46-ADF7-B422-7C7E-D7335D84ADCE"
+    private let CHARACTERISTIC_UUID = "DA306E46-ADF7-B422-7C7E-D7335D84ADCF"
+    
+    var pairingInProgress = false
 
     override init() {
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: DispatchQueue.main)
-
     }
 
+    // MARK: - Handles changes to the Bluetooth state
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         switch central.state {
         case .poweredOn:
             isBluetoothOn = true
             print("Bluetooth is powered on.")
-            startScanning()
         case .poweredOff:
             isBluetoothOn = false
             print("Bluetooth is powered off.")
@@ -50,22 +54,24 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         }
     }
 
-
+    // MARK: - Start scanning for bluetooth devices
     func startScanning() {
         guard centralManager.state == .poweredOn else {
             print("Bluetooth is not powered on.")
             return
         }
+        
         peripherals = []
         centralManager.scanForPeripherals(withServices: nil, options: nil)
     }
 
+    // MARK: - Stop bluetooth scanning
     func stopScanning() {
         centralManager.stopScan()
     }
 
+    // MARK: - Is called when a perihperal is discovered during scanning
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-        // Filter peripherals by name
         if let name = peripheral.name, name.contains("Reveye") {
             // Add the peripheral only if it's not already in the list
             if !peripherals.contains(where: { $0.identifier == peripheral.identifier }) {
@@ -74,86 +80,70 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
             }
         }
     }
-
-
+    
+    // MARK: - Initiates a connection to a discovered peripheral
     func connectToPeripheral(_ peripheral: CBPeripheral) {
         centralManager.connect(peripheral, options: nil)
         self.connectedPeripheral = peripheral
-        print("connected peripheral is: \(connectedPeripheral?.name ?? "Unknown Device")")
-        peripheral.delegate = self
-        peripheral.discoverServices(nil) // Start discovering services after connecting
+        
         print("Connecting to \(self.connectedPeripheral?.name ?? "Unknown Device")...")
     }
-
-
+    
+    
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        print("Connected to \(peripheral.name ?? "unknown device")")
-        peripheral.discoverServices(nil) // Discover services
+        print("Connected to: \(peripheral.name ?? "Unknown Device") with peripheral ID: \(peripheral.identifier)")
+        peripheral.delegate = self
+        peripheral.discoverServices([CBUUID(string: SERVICE_UUID)])
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        if let error = error {
-            print("Error discovering services: \(error.localizedDescription)")
+        guard error == nil else {
+            print("Error discovering services: \(error!.localizedDescription)")
             return
         }
         
-        guard let services = peripheral.services else {
-            print("No services found.")
-            return
-        }
-        
-        print("Discovered services: \(services.map { $0.uuid })")
-        // För varje tjänst, upptäck dess egenskaper
-        for service in services {
-            peripheral.discoverCharacteristics(nil, for: service)
+        for service in peripheral.services ?? [] {
+            peripheral.discoverCharacteristics([CBUUID(string: CHARACTERISTIC_UUID)], for: service)
         }
     }
-
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        if let error = error {
-            print("Error discovering characteristics for service \(service.uuid): \(error.localizedDescription)")
+        guard error == nil else {
+            print("Error discovering characteristics: \(error!.localizedDescription)")
             return
         }
         
-        guard let characteristics = service.characteristics else {
-            print("No characteristics found for service \(service.uuid).")
-            return
-        }
-        
-        print("Discovered characteristics for service \(service.uuid): \(characteristics.map { $0.uuid })")
-        
-        // För varje egenskap, kolla om den är skrivbar
-        for characteristic in characteristics {
-            print("Discovered characteristic: \(characteristic.uuid)")
-
-            // Kontrollera om egenskapen är skrivbar
-            if characteristic.properties.contains(.write) {
+        for characteristic in service.characteristics ?? [] {
+            if characteristic.uuid == CBUUID(string: CHARACTERISTIC_UUID) {
                 writeCharacteristic = characteristic
-                print("Writable characteristic found: \(characteristic.uuid)")
-                break  // Du kan bryta här om du har hittat en skrivbar egenskap
+                print("Found characteristic to write: \(characteristic)")
             }
-        }
-
-        if writeCharacteristic == nil {
-            print("No writable characteristic found for service \(service.uuid).")
         }
     }
 
-
-
-
+    
+    // MARK: - Write a command to the Raspberry Pi
     func sendStartCommand() {
-        let command: String = "start"
-        print("connected är: \(self.connectedPeripheral?.name): \(self.connectedPeripheral?.identifier)")
-        print("characters is: \(writeCharacteristic?.uuid)")
-        guard let characteristic = writeCharacteristic, let peripheral = self.connectedPeripheral else {
-            print("No connected peripheral or writable characteristic.")
+        let command = "start"
+        
+        guard let peripheral = connectedPeripheral else {
+            print("No connected peripheral available.")
             return
         }
+        
+        guard let characteristic = writeCharacteristic else {
+            print("No write characteristic available.")
+            return
+        }
+        
+        
         let data = command.data(using: .utf8)!
+        
         peripheral.writeValue(data, for: characteristic, type: .withResponse)
         print("Sent command: \(command)")
     }
 
+    
+    
+    
 }
