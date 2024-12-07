@@ -79,10 +79,12 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     func connectToPeripheral(_ peripheral: CBPeripheral) {
         centralManager.connect(peripheral, options: nil)
         self.connectedPeripheral = peripheral
-        print("connected peripehral is: \(connectedPeripheral?.name)")
+        print("connected peripheral is: \(connectedPeripheral?.name ?? "Unknown Device")")
         peripheral.delegate = self
+        peripheral.discoverServices(nil) // Start discovering services after connecting
         print("Connecting to \(self.connectedPeripheral?.name ?? "Unknown Device")...")
     }
+
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("Connected to \(peripheral.name ?? "unknown device")")
@@ -90,33 +92,61 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        guard let services = peripheral.services else { return }
-
+        if let error = error {
+            print("Error discovering services: \(error.localizedDescription)")
+            return
+        }
+        
+        guard let services = peripheral.services else {
+            print("No services found.")
+            return
+        }
+        
+        print("Discovered services: \(services.map { $0.uuid })")
+        // För varje tjänst, upptäck dess egenskaper
         for service in services {
-            print("Discovered service: \(service.uuid)")
             peripheral.discoverCharacteristics(nil, for: service)
         }
     }
 
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        guard let characteristics = service.characteristics else { return }
 
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+        if let error = error {
+            print("Error discovering characteristics for service \(service.uuid): \(error.localizedDescription)")
+            return
+        }
+        
+        guard let characteristics = service.characteristics else {
+            print("No characteristics found for service \(service.uuid).")
+            return
+        }
+        
+        print("Discovered characteristics for service \(service.uuid): \(characteristics.map { $0.uuid })")
+        
+        // För varje egenskap, kolla om den är skrivbar
         for characteristic in characteristics {
             print("Discovered characteristic: \(characteristic.uuid)")
 
-            // Check if the characteristic is writable
+            // Kontrollera om egenskapen är skrivbar
             if characteristic.properties.contains(.write) {
                 writeCharacteristic = characteristic
                 print("Writable characteristic found: \(characteristic.uuid)")
+                break  // Du kan bryta här om du har hittat en skrivbar egenskap
             }
+        }
+
+        if writeCharacteristic == nil {
+            print("No writable characteristic found for service \(service.uuid).")
         }
     }
 
 
+
+
     func sendStartCommand() {
-        print("try to send")
         let command: String = "start"
         print("connected är: \(self.connectedPeripheral?.name): \(self.connectedPeripheral?.identifier)")
+        print("characters is: \(writeCharacteristic?.uuid)")
         guard let characteristic = writeCharacteristic, let peripheral = self.connectedPeripheral else {
             print("No connected peripheral or writable characteristic.")
             return
@@ -125,4 +155,5 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         peripheral.writeValue(data, for: characteristic, type: .withResponse)
         print("Sent command: \(command)")
     }
+
 }
