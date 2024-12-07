@@ -56,7 +56,7 @@ struct MainView: View {
 }
 
 struct BluetoothSearchView: View {
-    @ObservedObject var bluetoothManager = BluetoothManager()
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
     @Binding var showBluetoothSearch: Bool // State to dismiss the pop-up
     @Binding var selectedDevice: String
     
@@ -79,44 +79,47 @@ struct BluetoothSearchView: View {
                     .padding(.top, 20)
                 
                 if bluetoothManager.peripherals.isEmpty {
-                                Text("No devices found")
-                                    .foregroundColor(.gray)
-                                    .padding()
-                            } else {
-                                ScrollView {
-                                    VStack(spacing: 10) {
-                                        ForEach(Array(bluetoothManager.peripherals.enumerated()), id: \.element.identifier) { index, peripheral in
-                                                Button(action: {
-                                                    showBluetoothSearch = false
-                                                    bluetoothManager.stopScanning()
-                                                    selectedDevice = peripheral.name ?? "Unknown Device"
-                                                }) {
-                                                    HStack {
-                                                        Text(peripheral.name ?? "Unknown Device")
-                                                            .font(.system(size: 18, weight: .medium))
-                                                            .foregroundColor(.white)
-                                                        Spacer()
-                                                    }
-                                                    .padding(.vertical, 5)
-                                                    
-                                                }
-                                                
-                                                if index < bluetoothManager.peripherals.count - 1 {
-                                                    Divider()
-                                                        .background(Color.white)
-                                                        .padding(.horizontal, 3)
-                                                }
-                                            }
+                    Text("No devices found")
+                        .foregroundColor(.gray)
+                        .padding()
+                } else {
+                    ScrollView {
+                        VStack(spacing: 10) {
+                            ForEach(Array(bluetoothManager.peripherals.enumerated()), id: \.element.identifier) { index, peripheral in
+                                Button(action: {
+                                    showBluetoothSearch = false
+                                    bluetoothManager.stopScanning()
+                                    selectedDevice = peripheral.name ?? "Unknown Device"
+                                    bluetoothManager.connectToPeripheral(peripheral)
+                                    
+                                }) {
+                                    HStack {
+                                        Text(peripheral.name ?? "Unknown Device")
+                                        
+                                            .font(.system(size: 18, weight: .medium))
+                                            .foregroundColor(.white)
+                                        Spacer()
                                     }
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
-                                    .background(Color.white.opacity(0.2))
-                                    .cornerRadius(15)
+                                    .padding(.vertical, 5)
+                                    
+                                }
+                                
+                                if index < bluetoothManager.peripherals.count - 1 {
+                                    Divider()
+                                        .background(Color.white)
+                                        .padding(.horizontal, 3)
                                 }
                             }
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(15)
+                    }
+                }
                 
-               
-               
+                
+                
                 Spacer()
                 
                 // Close Button
@@ -138,23 +141,29 @@ struct BluetoothSearchView: View {
             .padding(.horizontal, 20)
             
         }
-        .onAppear {
-                    bluetoothManager.startScanning()
-                }
-                .onDisappear {
-                    bluetoothManager.stopScanning()
-                }
+        .onDisappear {
+            bluetoothManager.stopScanning()
+        }
         
     }
-        
+    
 }
 
 struct StartStopButton: View {
     @Binding var isRunning: Bool
     var isBluetoothConnected: Bool
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
     
     var body: some View {
         Button(action: {
+            if !isRunning {
+                print("nu är jag igång")
+                bluetoothManager.sendStartCommand()
+            } else {
+                print("nu är jag inte igång")
+                
+            }
+            
             isRunning.toggle()
         }, label: {
             HStack {
@@ -183,10 +192,14 @@ struct BluetoothButton: View {
     @Binding var isBluetoothConnected: Bool
     @Binding var showBluetoothSearch: Bool
     @Binding var selectedDevice: String
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
+    
     
     var body: some View {
         Button(action: {
             showBluetoothSearch.toggle()
+            bluetoothManager.startScanning()
+            
         }, label: {
             HStack {
                 Image("bluetooth")
