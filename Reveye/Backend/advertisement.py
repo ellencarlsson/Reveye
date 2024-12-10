@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
@@ -8,8 +6,6 @@ import dbus.service
 import time
 import threading
 import argparse
-
-import array
 
 from random import randint
 
@@ -196,7 +192,7 @@ def main(timeout=0):
 
     test_advertisement = TestAdvertisement(bus, 0)
 
-    mainloop = GObject.MainLoop()
+    mainloop = GLib.MainLoop()
 
     ad_manager.RegisterAdvertisement(test_advertisement.get_path(), {},
                                      reply_handler=register_ad_cb,
