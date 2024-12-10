@@ -87,13 +87,31 @@ def start_bluetooth():
 
     print("Creating GATT application...")
     app = Application(bus)
+    service = Service(bus, 0, app)
+    characteristic = Characteristic(bus, 0, service)
+
+    # Add characteristic to the service and add the service to the app
+    service.add_characteristic(characteristic)
+    app.add_service(service)
 
     # Reset Bluetooth adapter before enabling advertising
     reset_bluetooth_adapter()
 
-    # Add GATT services
-    service = Service(bus, 0, app)
-    characteristic = Characteristic(bus, 0, service)
+    # Register the GATT application with BlueZ
+    adapter = dbus.Interface(
+        bus.get_object("org.bluez", "/org/bluez/hci0"),
+        "org.bluez.GattManager1"
+    )
+
+    print("Registering GATT application...")
+    print(f"Application path: {app.get_path()}")
+
+    try:
+        adapter.RegisterApplication(app.get_path(), {},
+                                    reply_handler=lambda: print("GATT application registered!"),
+                                    error_handler=lambda e: print(f"Error: {e}"))
+    except Exception as e:
+        print(f"Error while registering application: {e}")
 
     # Enable BLE advertising
     enable_advertising()
