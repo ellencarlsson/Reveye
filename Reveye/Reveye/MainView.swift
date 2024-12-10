@@ -9,7 +9,6 @@ import SwiftUI
 
 struct MainView: View {
     @State private var isBluetoothConnected = false
-    @State private var isRunning = false
     @State private var showBluetoothSearch = false
     @State private var selectedDevice = ""
     
@@ -41,7 +40,7 @@ struct MainView: View {
                 BluetoothButton(isBluetoothConnected: $isBluetoothConnected, showBluetoothSearch: $showBluetoothSearch, selectedDevice: $selectedDevice)
                     .padding(.bottom, 20)
                 
-                StartStopButton(isRunning: $isRunning, isBluetoothConnected: selectedDevice == "" ? false : true)
+                StartStopButton()
                 
                 
             }
@@ -59,14 +58,12 @@ struct BluetoothSearchView: View {
     @ObservedObject var bluetoothManager = BluetoothManager.shared
     @Binding var showBluetoothSearch: Bool // State to dismiss the pop-up
     @Binding var selectedDevice: String
+    @State var showLoading = false
     
     var body: some View {
         ZStack {
             Image("bluetooth-background")
                 .resizable()
-                .edgesIgnoringSafeArea(.all)
-            
-            
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 20) {
@@ -79,26 +76,53 @@ struct BluetoothSearchView: View {
                     .padding(.top, 20)
                 
                 if bluetoothManager.peripherals.isEmpty {
-                    Text("No devices found")
-                        .foregroundColor(.gray)
-                        .padding()
+                    if bluetoothManager.isScanning {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: Color.white.opacity(0.7)))
+
+                    } else {
+                        Text("No devices found")
+                            .foregroundColor(.gray)
+                            .padding()
+                    }
+                    
                 } else {
                     ScrollView {
                         VStack(spacing: 10) {
                             ForEach(Array(bluetoothManager.peripherals.enumerated()), id: \.element.identifier) { index, peripheral in
                                 Button(action: {
-                                    showBluetoothSearch = false
-                                    bluetoothManager.stopScanning()
-                                    selectedDevice = peripheral.name ?? "Unknown Device"
-                                    bluetoothManager.connectToPeripheral(peripheral)
-                                    
+                                    showLoading = true
+                                    bluetoothManager.connectToPeripheral(peripheral, completion: {success in
+                                        
+                                        if success {
+                                            showBluetoothSearch = false
+                                            bluetoothManager.stopScanning()
+                                            selectedDevice = peripheral.name ?? "Unknown Device"
+                                            showLoading = false
+                                        } else {
+                                            // could not connect
+                                        }
+                                        
+                                    })
+                                                                                                
                                 }) {
                                     HStack {
-                                        Text(peripheral.name ?? "Unknown Device")
                                         
-                                            .font(.system(size: 18, weight: .medium))
-                                            .foregroundColor(.white)
-                                        Spacer()
+                                            Text(peripheral.name ?? "Unknown Device")
+                                                .font(.system(size: 18, weight: .medium))
+                                                .foregroundColor(.white)
+                                            
+                                            if showLoading {
+                                                Spacer()
+                                                ProgressView()
+                                                    .progressViewStyle(CircularProgressViewStyle(tint: Color.white.opacity(0.7)))
+                                            } else {
+                                                Spacer()
+                                            }
+                                            
+                                            
+                                        
+                                                                    
                                     }
                                     .padding(.vertical, 5)
                                     
@@ -119,12 +143,16 @@ struct BluetoothSearchView: View {
                 }
                 
                 
-                
                 Spacer()
                 
                 // Close Button
                 Button(action: {
-                    showBluetoothSearch = false
+                    
+                            showBluetoothSearch = false
+                            showLoading = false
+                    bluetoothManager.stopScanning()
+                        
+                    
                 }, label: {
                     Text("Close")
                         .font(.system(size: 30, weight: .medium))
@@ -148,19 +176,17 @@ struct BluetoothSearchView: View {
 }
 
 struct StartStopButton: View {
-    @Binding var isRunning: Bool
-    var isBluetoothConnected: Bool
+    @State var isRunning = false
     @ObservedObject var bluetoothManager = BluetoothManager.shared
     
     var body: some View {
         Button(action: {
-            if !isRunning {
-                print("nu är jag igång")
-                bluetoothManager.sendStartCommand()
-            } else {
-                print("nu är jag inte igång")
-                
-            }
+                if !isRunning {
+                    bluetoothManager.sendStartCommand()
+                } else {
+                    bluetoothManager.sendStopCommand()
+                }
+            
             
             isRunning.toggle()
         }, label: {
@@ -178,11 +204,10 @@ struct StartStopButton: View {
             .padding(.vertical, 10)
             .padding(.horizontal)
             .frame(maxWidth: .infinity)
-            .background(isRunning ? Color.red.opacity(0.7) : natureGreen.opacity(0.7))
+            .background(isRunning ? Color.red.opacity(0.7) : bluetoothManager.isConnected ? natureGreen.opacity(0.7) : .gray.opacity(0.7))
             .cornerRadius(15)
         })
-        .disabled(!isBluetoothConnected)
-        .opacity(isBluetoothConnected ? 1 : 0.6)
+        .disabled(!bluetoothManager.isConnected)
     }
 }
 
@@ -205,7 +230,7 @@ struct BluetoothButton: View {
                     .scaledToFit()
                     .frame(width: 30, height: 30)
                     .foregroundColor(.white)
-                Text(selectedDevice != "" ? selectedDevice : "No Reveye device connected")
+                Text(bluetoothManager.isConnected ? selectedDevice : "No Reveye device connected")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                     .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
@@ -220,7 +245,7 @@ struct BluetoothButton: View {
     }
 }
 
-let natureGreen = Color(red: 169/255, green: 233/255, blue: 76/255).opacity(0.6)
+let natureGreen = Color(red: 169/255, green: 233/255, blue: 76/255)
 
 let darkGreen = Color(red: 34/255, green: 51/255, blue: 26/255)
 
