@@ -9,7 +9,7 @@ import CoreBluetooth
 import Foundation
 
 class BluetoothManager: NSObject, ObservableObject {
-    static let shared = BluetoothManager()  // Singleton instance
+    static let shared = BluetoothManager()
     
     private var cbManager: CBCentralManager!
     private var connectedPeripheral: CBPeripheral?
@@ -20,7 +20,11 @@ class BluetoothManager: NSObject, ObservableObject {
     private let uartRXUUID = CBUUID(string: "6e400002-b5a3-f393-e0a9-e50e24dcca9e")   // RX Characteristic UUID
     private let uartTXUUID = CBUUID(string: "6e400003-b5a3-f393-e0a9-e50e24dcca9e")   // TX Characteristic UUID
     
-    @Published var peripherals: [CBPeripheral] = []  // To keep track of discovered peripherals
+    @Published var peripherals: [CBPeripheral] = []
+    @Published var isConnected = false
+    @Published var isScanning = false
+    
+    private var connectCompletion: ((Bool) -> Void)?
     
     private override init() {
         super.init()
@@ -35,32 +39,48 @@ class BluetoothManager: NSObject, ObservableObject {
         }
         cbManager.scanForPeripherals(withServices: [serviceUUID], options: nil)
         print("Scanning for peripherals...")
+        isScanning = true
     }
     
     // Stop scanning
     func stopScanning() {
+        peripherals = []
         cbManager.stopScan()
         print("Stopped scanning.")
+        isScanning = false
     }
     
     // Connect to a discovered peripheral
-    func connectToPeripheral(_ peripheral: CBPeripheral) {
+    func connectToPeripheral(_ peripheral: CBPeripheral, completion: @escaping (Bool) -> Void) {
         cbManager.connect(peripheral, options: nil)
         connectedPeripheral = peripheral
         peripheral.delegate = self
         print("Connecting to peripheral: \(peripheral.name ?? "Unknown")")
+        self.connectCompletion = completion
     }
+
     
-    // Send a text to the connected peripheral
+    
     func sendStartCommand() {
         guard let uartRXCharacteristic = uartRXCharacteristic else {
             print("RX Characteristic not found.")
             return
         }
-        let text = "charles ingvar"
+        let text = "start"
         let data = text.data(using: .utf8)!
         connectedPeripheral?.writeValue(data, for: uartRXCharacteristic, type: .withResponse)
-        print("Sent text: \(text)")
+        print("Sent start command")
+    }
+    
+    func sendStopCommand() {
+        guard let uartRXCharacteristic = uartRXCharacteristic else {
+            print("RX Characteristic not found.")
+            return
+        }
+        let text = "stop"
+        let data = text.data(using: .utf8)!
+        connectedPeripheral?.writeValue(data, for: uartRXCharacteristic, type: .withResponse)
+        print("Sent stop command")
     }
     
     // Disconnect from the peripheral
@@ -68,6 +88,7 @@ class BluetoothManager: NSObject, ObservableObject {
         if let peripheral = connectedPeripheral {
             cbManager.cancelPeripheralConnection(peripheral)
             print("Disconnected from peripheral.")
+            isConnected = false
         }
     }
 }
@@ -96,20 +117,28 @@ extension BluetoothManager: CBCentralManagerDelegate {
         if !peripherals.contains(where: { $0.identifier == peripheral.identifier }) {
             peripherals.append(peripheral)
             print("Discovered peripheral: \(peripheral.name ?? "Unknown")")
+            isScanning = false
         }
     }
     
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("Connected to peripheral: \(peripheral.name ?? "Unknown")")
-        peripheral.discoverServices([serviceUUID])  // Discover services after connection
+        peripheral.discoverServices([serviceUUID])
+        self.isConnected = true
+        connectCompletion?(true)  // Notify success
+        connectCompletion = nil
     }
+    
     
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         print("Failed to connect to peripheral: \(peripheral.name ?? "Unknown"). Error: \(error?.localizedDescription ?? "Unknown error")")
+        connectCompletion?(false)  // Notify failure
+        connectCompletion = nil
     }
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         print("Disconnected from peripheral: \(peripheral.name ?? "Unknown"). Error: \(error?.localizedDescription ?? "No error")")
+        self.isConnected = false
     }
 }
 
