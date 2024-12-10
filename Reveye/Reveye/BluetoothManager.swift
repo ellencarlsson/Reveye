@@ -5,145 +5,192 @@
 //  Created by Ellen Carlsson on 2024-11-30.
 //
 
-import Foundation
 import CoreBluetooth
+import Foundation
 
-class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeripheralDelegate {
+class BluetoothManager: NSObject, ObservableObject {
     static let shared = BluetoothManager()
     
-    @Published var peripherals: [CBPeripheral] = []
-    @Published var isBluetoothOn: Bool = false
-    private var centralManager: CBCentralManager!
+    private var cbManager: CBCentralManager!
     private var connectedPeripheral: CBPeripheral?
-    private var writeCharacteristic: CBCharacteristic?
+    private var uartRXCharacteristic: CBCharacteristic?
+    private var uartTXCharacteristic: CBCharacteristic?
     
-    private let SERVICE_UUID = "DA306E46-ADF7-B422-7C7E-D7335D84ADCE"
-    private let CHARACTERISTIC_UUID = "DA306E46-ADF7-B422-7C7E-D7335D84ADCF"
+    private let serviceUUID = CBUUID(string: "6e400001-b5a3-f393-e0a9-e50e24dcca9e")  // UART Service UUID
+    private let uartRXUUID = CBUUID(string: "6e400002-b5a3-f393-e0a9-e50e24dcca9e")   // RX Characteristic UUID
+    private let uartTXUUID = CBUUID(string: "6e400003-b5a3-f393-e0a9-e50e24dcca9e")   // TX Characteristic UUID
     
-    var pairingInProgress = false
-
-    override init() {
+    @Published var peripherals: [CBPeripheral] = []
+    @Published var isConnected = false
+    @Published var isScanning = false
+    
+    private var connectCompletion: ((Bool) -> Void)?
+    
+    private override init() {
         super.init()
-        centralManager = CBCentralManager(delegate: self, queue: DispatchQueue.main)
+        cbManager = CBCentralManager(delegate: self, queue: nil)
     }
-
-    // MARK: - Handles changes to the Bluetooth state
-    func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        switch central.state {
-        case .poweredOn:
-            isBluetoothOn = true
-            print("Bluetooth is powered on.")
-        case .poweredOff:
-            isBluetoothOn = false
-            print("Bluetooth is powered off.")
-        case .unauthorized:
-            isBluetoothOn = false
-            print("Bluetooth is unauthorized.")
-        case .unsupported:
-            isBluetoothOn = false
-            print("Bluetooth is unsupported.")
-        case .unknown:
-            isBluetoothOn = false
-            print("Bluetooth state is unknown.")
-        case .resetting:
-            isBluetoothOn = false
-            print("Bluetooth is resetting.")
-        @unknown default:
-            isBluetoothOn = false
-            print("Unknown Bluetooth state.")
-        }
-    }
-
-    // MARK: - Start scanning for bluetooth devices
+    
+    // Start scanning for peripherals that match the service UUID
     func startScanning() {
-        guard centralManager.state == .poweredOn else {
+        guard cbManager.state == .poweredOn else {
             print("Bluetooth is not powered on.")
             return
         }
-        
-        peripherals = []
-        centralManager.scanForPeripherals(withServices: nil, options: nil)
+        cbManager.scanForPeripherals(withServices: [serviceUUID], options: nil)
+        print("Scanning for peripherals...")
+        isScanning = true
     }
-
-    // MARK: - Stop bluetooth scanning
+    
+    // Stop scanning
     func stopScanning() {
-        centralManager.stopScan()
+        peripherals = []
+        cbManager.stopScan()
+        print("Stopped scanning.")
+        isScanning = false
+    }
+    
+    // Connect to a discovered peripheral
+    func connectToPeripheral(_ peripheral: CBPeripheral, completion: @escaping (Bool) -> Void) {
+        cbManager.connect(peripheral, options: nil)
+        connectedPeripheral = peripheral
+        peripheral.delegate = self
+        print("Connecting to peripheral: \(peripheral.name ?? "Unknown")")
+        self.connectCompletion = completion
     }
 
-    // MARK: - Is called when a perihperal is discovered during scanning
-    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-        if let name = peripheral.name, name.contains("Reveye") {
-            // Add the peripheral only if it's not already in the list
-            if !peripherals.contains(where: { $0.identifier == peripheral.identifier }) {
-                peripherals.append(peripheral)
-                print("Discovered Reveye device: \(name)")
-            }
+    
+    
+    func sendStartCommand() {
+        guard let uartRXCharacteristic = uartRXCharacteristic else {
+            print("RX Characteristic not found.")
+            return
+        }
+        let text = "start"
+        let data = text.data(using: .utf8)!
+        connectedPeripheral?.writeValue(data, for: uartRXCharacteristic, type: .withResponse)
+        print("Sent start command")
+    }
+    
+    func sendStopCommand() {
+        guard let uartRXCharacteristic = uartRXCharacteristic else {
+            print("RX Characteristic not found.")
+            return
+        }
+        let text = "stop"
+        let data = text.data(using: .utf8)!
+        connectedPeripheral?.writeValue(data, for: uartRXCharacteristic, type: .withResponse)
+        print("Sent stop command")
+    }
+    
+    // Disconnect from the peripheral
+    func disconnectFromPeripheral() {
+        if let peripheral = connectedPeripheral {
+            cbManager.cancelPeripheralConnection(peripheral)
+            print("Disconnected from peripheral.")
+            isConnected = false
+        }
+    }
+}
+
+// MARK: - CBCentralManagerDelegate
+extension BluetoothManager: CBCentralManagerDelegate {
+    func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        switch central.state {
+        case .poweredOn:
+            print("Bluetooth is powered on.")
+        case .poweredOff:
+            print("Bluetooth is powered off.")
+        case .resetting:
+            print("Bluetooth is resetting.")
+        case .unauthorized:
+            print("Bluetooth is unauthorized.")
+        case .unsupported:
+            print("Bluetooth is unsupported on this device.")
+        default:
+            print("Bluetooth state is unknown.")
         }
     }
     
-    // MARK: - Initiates a connection to a discovered peripheral
-    func connectToPeripheral(_ peripheral: CBPeripheral) {
-        centralManager.connect(peripheral, options: nil)
-        self.connectedPeripheral = peripheral
-        
-        print("Connecting to \(self.connectedPeripheral?.name ?? "Unknown Device")...")
+    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi: NSNumber) {
+        // Add peripheral to list if it's not already added
+        if !peripherals.contains(where: { $0.identifier == peripheral.identifier }) {
+            peripherals.append(peripheral)
+            print("Discovered peripheral: \(peripheral.name ?? "Unknown")")
+            isScanning = false
+        }
     }
-    
     
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        print("Connected to: \(peripheral.name ?? "Unknown Device") with peripheral ID: \(peripheral.identifier)")
-        peripheral.delegate = self
-        peripheral.discoverServices([CBUUID(string: SERVICE_UUID)])
+        print("Connected to peripheral: \(peripheral.name ?? "Unknown")")
+        peripheral.discoverServices([serviceUUID])
+        self.isConnected = true
+        connectCompletion?(true)  // Notify success
+        connectCompletion = nil
     }
+    
+    
+    func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        print("Failed to connect to peripheral: \(peripheral.name ?? "Unknown"). Error: \(error?.localizedDescription ?? "Unknown error")")
+        connectCompletion?(false)  // Notify failure
+        connectCompletion = nil
+    }
+    
+    func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+        print("Disconnected from peripheral: \(peripheral.name ?? "Unknown"). Error: \(error?.localizedDescription ?? "No error")")
+        self.isConnected = false
+    }
+}
 
+// MARK: - CBPeripheralDelegate
+extension BluetoothManager: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard error == nil else {
-            print("Error discovering services: \(error!.localizedDescription)")
+            print("Error discovering services: \(error?.localizedDescription ?? "Unknown error")")
             return
         }
         
-        for service in peripheral.services ?? [] {
-            peripheral.discoverCharacteristics([CBUUID(string: CHARACTERISTIC_UUID)], for: service)
-        }
-    }
-
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        guard error == nil else {
-            print("Error discovering characteristics: \(error!.localizedDescription)")
-            return
-        }
-        
-        for characteristic in service.characteristics ?? [] {
-            if characteristic.uuid == CBUUID(string: CHARACTERISTIC_UUID) {
-                writeCharacteristic = characteristic
-                print("Found characteristic to write: \(characteristic)")
+        if let services = peripheral.services {
+            for service in services where service.uuid == serviceUUID {
+                peripheral.discoverCharacteristics([uartRXUUID, uartTXUUID], for: service)
+                print("Discovered UART service and characteristics.")
             }
         }
     }
-
     
-    // MARK: - Write a command to the Raspberry Pi
-    func sendStartCommand() {
-        let command = "start"
-        
-        guard let peripheral = connectedPeripheral else {
-            print("No connected peripheral available.")
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+        guard error == nil else {
+            print("Error discovering characteristics: \(error?.localizedDescription ?? "Unknown error")")
             return
         }
         
-        guard let characteristic = writeCharacteristic else {
-            print("No write characteristic available.")
-            return
+        if service.uuid == serviceUUID {
+            for characteristic in service.characteristics ?? [] {
+                if characteristic.uuid == uartRXUUID {
+                    uartRXCharacteristic = characteristic
+                    print("Found RX characteristic.")
+                } else if characteristic.uuid == uartTXUUID {
+                    uartTXCharacteristic = characteristic
+                    print("Found TX characteristic.")
+                }
+            }
+            
+            // Enable notifications for the TX characteristic if it's found
+            if let uartTX = uartTXCharacteristic {
+                peripheral.setNotifyValue(true, for: uartTX)
+                print("Enabled notifications for TX characteristic.")
+            }
         }
-        
-        
-        let data = command.data(using: .utf8)!
-        
-        peripheral.writeValue(data, for: characteristic, type: .withResponse)
-        print("Sent command: \(command)")
     }
-
     
-    
-    
+    func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        guard error == nil else {
+            print("Error updating value for characteristic: \(error?.localizedDescription ?? "Unknown error")")
+            return
+        }
+        
+        if characteristic.uuid == uartTXUUID, let data = characteristic.value, let receivedText = String(data: data, encoding: .utf8) {
+            print("Received data: \(receivedText)")
+        }
+    }
 }
