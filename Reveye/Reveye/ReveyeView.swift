@@ -11,7 +11,7 @@ struct ReveyeView: View {
     @State private var batteryLevel: Double = 80
     @State private var temp: Int = 60
     
-    @State var currentMiniView: AnyView = AnyView(settingsView())
+    @State var currentMiniView: AnyView = AnyView(powerView())
     
     var body: some View {
         VStack {
@@ -37,11 +37,6 @@ struct ReveyeView: View {
                 }
                 
             }
-            
-            
-            
-
-            
             Spacer()
             
             
@@ -180,8 +175,13 @@ struct textView: View {
 
 
 struct powerView: View {
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
+    
     var body: some View {
-        startStopButton()
+        
+            startStopButton()
+        
+              
     }
 }
 
@@ -210,7 +210,7 @@ struct startStopButton: View {
                 Image(systemName: isRunning ? "stop.fill" : "play.fill")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 30, height: 30)
+                    .frame(width: 25, height: 25)
                     .foregroundColor(.white)
                 Text(isRunning ? "Stop" : "Start")
                     .font(.system(size: 20))
@@ -220,7 +220,7 @@ struct startStopButton: View {
             .padding(.vertical, 15)
             .padding(.horizontal)
             .frame(maxWidth: .infinity)
-            .background(isRunning ? Color.red.opacity(0.7) : natureGreen.opacity(0.7) )
+            .background(isRunning ? Color.red : .green )
             .cornerRadius(15)
         })
     }

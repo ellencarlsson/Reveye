@@ -15,6 +15,7 @@
 		C103D5342CFB292B00EB7507 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C103D5332CFB292B00EB7507 /* MainView.swift */; };
 		C135E55F2D03074900177EF1 /* ExternalAccessory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C135E55E2D03074900177EF1 /* ExternalAccessory.framework */; };
 		C152CD602D08D3B80036440D /* ReveyeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C152CD5F2D08D3B80036440D /* ReveyeView.swift */; };
+		C152CD622D08F6620036440D /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C152CD612D08F6620036440D /* ConnectView.swift */; };
 		C1F24DF42CFB58F400C14AC6 /* BluetoothManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F24DF32CFB58F400C14AC6 /* BluetoothManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -29,6 +30,7 @@
 		C135E55E2D03074900177EF1 /* ExternalAccessory.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExternalAccessory.framework; path = System/Library/Frameworks/ExternalAccessory.framework; sourceTree = SDKROOT; };
 		C135E5602D03077000177EF1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C152CD5F2D08D3B80036440D /* ReveyeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReveyeView.swift; sourceTree = "<group>"; };
+		C152CD612D08F6620036440D /* ConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
 		C1F24DF32CFB58F400C14AC6 /* BluetoothManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -73,6 +75,7 @@
 				C103D5332CFB292B00EB7507 /* MainView.swift */,
 				C152CD5F2D08D3B80036440D /* ReveyeView.swift */,
 				C1F24DF32CFB58F400C14AC6 /* BluetoothManager.swift */,
+				C152CD612D08F6620036440D /* ConnectView.swift */,
 			);
 			path = Reveye;
 			sourceTree = "<group>";
@@ -167,6 +170,7 @@
 				C103D5262CFB246E00EB7507 /* ContentView.swift in Sources */,
 				C103D5342CFB292B00EB7507 /* MainView.swift in Sources */,
 				C152CD602D08D3B80036440D /* ReveyeView.swift in Sources */,
+				C152CD622D08F6620036440D /* ConnectView.swift in Sources */,
 				C1F24DF42CFB58F400C14AC6 /* BluetoothManager.swift in Sources */,
 				C103D5242CFB246E00EB7507 /* ReveyeApp.swift in Sources */,
 			);
