@@ -60,16 +60,16 @@ class TxCharacteristic(Characteristic):
                                 ['notify'], service)
         self.notifying = False
         GLib.io_add_watch(sys.stdin, GLib.IO_IN, self.on_console_input)
-        self.last_notify_time = time()
-        GLib.timeout_add(15000, self.notify_timer)
+        #self.last_notify_time = time()
+        #GLib.timeout_add(15000, self.notify_timer)
 
-    def notify_timer(self):
+    """def notify_timer(self):
         # This method will be called every 30 seconds
         if time() - self.last_notify_time >= 15:  # Check if 30 seconds have passed
             self.send_tx("Tass och udo")  # Send notification text
             self.last_notify_time = time()  # Reset the timer
 
-        return True
+        return True"""
 
     def on_console_input(self, fd, condition):
         s = fd.readline()
