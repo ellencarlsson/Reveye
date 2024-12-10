@@ -141,9 +141,7 @@ struct BluetoothSearchView: View {
             .padding(.horizontal, 20)
             
         }
-        .onDisappear {
-            bluetoothManager.stopScanning()
-        }
+        
         
     }
     
