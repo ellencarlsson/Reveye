@@ -1,10 +1,12 @@
 import sys
+sys.path.append('/home/pi/Reveye-1/Reveye')
 import dbus, dbus.mainloop.glib
 from gi.repository import GLib
 from advertisement import Advertisement
 from advertisement import register_ad_cb, register_ad_error_cb
 from gatt_server import Service, Characteristic
 from gatt_server import register_app_cb, register_app_error_cb
+from Hardware.raspberrypi import get_cpu_temp
 from time import time
 
 BLUEZ_SERVICE_NAME =           'org.bluez'
@@ -15,7 +17,7 @@ GATT_CHRC_IFACE =              'org.bluez.GattCharacteristic1'
 UART_SERVICE_UUID =            '6e400001-b5a3-f393-e0a9-e50e24dcca9e'
 UART_RX_CHARACTERISTIC_UUID =  '6e400002-b5a3-f393-e0a9-e50e24dcca9e'
 UART_TX_CHARACTERISTIC_UUID =  '6e400003-b5a3-f393-e0a9-e50e24dcca9e'
-LOCAL_NAME =                   'rpi-gatt-server'
+LOCAL_NAME =                   'Reveye Device'
 mainloop = None
 
 class PairingAgent(dbus.service.Object):
@@ -60,16 +62,16 @@ class TxCharacteristic(Characteristic):
                                 ['notify'], service)
         self.notifying = False
         GLib.io_add_watch(sys.stdin, GLib.IO_IN, self.on_console_input)
-        #self.last_notify_time = time()
-        #GLib.timeout_add(15000, self.notify_timer)
+        self.last_notify_time = time()
+        GLib.timeout_add(10000, self.send_cpu)
 
-    """def notify_timer(self):
+    def send_cpu(self):
+        cpu_temp = get_cpu_temp() 
         # This method will be called every 30 seconds
-        if time() - self.last_notify_time >= 15:  # Check if 30 seconds have passed
-            self.send_tx("Tass och udo")  # Send notification text
-            self.last_notify_time = time()  # Reset the timer
+        self.send_tx(f"Temp:{cpu_temp}")  # Send notification text
+        self.last_notify_time = time()  # Reset the timer
 
-        return True"""
+        return True
 
     def on_console_input(self, fd, condition):
         s = fd.readline()
