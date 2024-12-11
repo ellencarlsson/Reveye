@@ -9,9 +9,9 @@ import SwiftUI
 
 struct ReveyeView: View {
     @State private var batteryLevel: Double = 80
-    @State private var temp: Int = 60
+    @State private var temp: CGFloat = 60
     
-    @State var currentMiniView: AnyView = AnyView(powerView())
+    @State var currentMiniView: AnyView = AnyView(textView())
     
     var body: some View {
         VStack {
@@ -25,63 +25,31 @@ struct ReveyeView: View {
                 Spacer()
                 
                 
-                VStack {
-                    Text("\(temp)°C")
-                        .foregroundColor(getTemperatureColor(for: temp))
-                        .font(.system(size: 30, weight: .semibold))
-                        .padding(.bottom, -10)
-                    
-                    Text("\(getValue(for: temp))")
-                        .foregroundColor(getTemperatureColor(for: temp))
-                    Spacer()
-                }
-                
             }
-            Spacer()
+            
+            Image("ReveyeDevice")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 260)
+                .shadow(color: Color.white.opacity(0.2), radius: 80)
+                .shadow(color: Color.black.opacity(0.5), radius: 10)
+                .padding()
+                .padding(.bottom, 30)
             
             
-            ZStack {
-                
-                
-                
-                Circle()
-                    .trim(from: 0, to: batteryLevel / 100)
-                    .stroke(getBatteryColor(for: Int(batteryLevel)), style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                    .rotationEffect(.degrees(-90)) // Start from the top
-                    .frame(width: 350, height: 350)
-                
-                Circle()
-                    .trim(from: 0, to: 360)
-                    .stroke(getBatteryColor(for: Int(batteryLevel)).opacity(0.2), style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                    .rotationEffect(.degrees(-90)) // Start from the top
-                    .frame(width: 350, height: 350)
-                
-                
-                
-                Image("ReveyeDevice")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 260)
-                    .shadow(color: Color.white.opacity(0.2), radius: 80)
-                    .shadow(color: Color.black.opacity(0.5), radius: 10)
-                    .padding()
-            }
-            .padding(.bottom, 30)
-            
-           
             
             
             HStack(spacing: 30) {
-                            icon(iconName: "power", isActive: true, currentMiniView: $currentMiniView, newMiniView: AnyView(powerView()))
-                            icon(iconName: "chat", isActive: false, currentMiniView: $currentMiniView, newMiniView: AnyView(textView()))
-                            icon(iconName: "bluetooth-filled", isActive: false, currentMiniView: $currentMiniView, newMiniView: AnyView(bluetoothView()))
-                            icon(iconName: "settings-filled", isActive: false, currentMiniView: $currentMiniView, newMiniView: AnyView(settingsView()))
-                        }
+                icon(iconName: "power", isActive: true, currentMiniView: $currentMiniView, newMiniView: AnyView(powerView()))
+                icon(iconName: "chat", isActive: false, currentMiniView: $currentMiniView, newMiniView: AnyView(textView()))
+                icon(iconName: "speedometer", isActive: false, currentMiniView: $currentMiniView, newMiniView: AnyView(performanceView()))
+                icon(iconName: "settings-filled", isActive: false, currentMiniView: $currentMiniView, newMiniView: AnyView(settingsView()))
+            }
             .padding(.bottom, 10)
-                        
+            
             
             currentMiniView
-                .frame(height: 150)
+                .frame(height: 200)
             
             
         }
@@ -97,7 +65,7 @@ struct icon: View {
     let isActive: Bool
     @Binding var currentMiniView: AnyView
     let newMiniView: AnyView // The view to display when this icon is tapped
-
+    
     var body: some View {
         VStack {
             Button {
@@ -115,14 +83,6 @@ struct icon: View {
 }
 
 struct settingsView: View {
-    var body: some View {
-        Text("A man with a hat to the right")
-            .foregroundColor(textColor)
-            .font(.system(size: 20, weight: .semibold))
-    }
-}
-
-struct bluetoothView: View {
     var body: some View {
         VStack {
             HStack {
@@ -142,34 +102,44 @@ struct bluetoothView: View {
             
             
             Button(action: {
-                    
+                
             }, label: {
                 
-                    Text("Disconnect")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
-                        .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
+                Text("Disconnect")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
                 
-                .padding(.vertical, 15)
-                .padding(.horizontal)
-                .frame(maxWidth: .infinity)
-                .background(grayButton)
-                .cornerRadius(15)
+                    .padding(.vertical, 15)
+                    .padding(.horizontal)
+                    .frame(maxWidth: .infinity)
+                    .background(grayButton)
+                    .cornerRadius(15)
             })
         }
-            
+    }
+}
+
+struct performanceView: View {
+    var body: some View {
+        HStack {
+            tempIndicator(temp: 20)
+            FPSIndicator(FPS: 12)
         }
         
+        
+    }
+    
     
 }
 
 struct textView: View {
     var body: some View {
-            
-                Text("A man with a hat to the right")
-                    .foregroundColor(textColor)
-                    .font(.system(size: 20))
-            
+        
+        Text("A man with a hat to the right")
+            .foregroundColor(textColor)
+            .font(.system(size: 30))
+        
     }
 }
 
@@ -179,9 +149,9 @@ struct powerView: View {
     
     var body: some View {
         
-            startStopButton()
+        startStopButton()
         
-              
+        
     }
 }
 
@@ -189,6 +159,8 @@ let darkGray = Color(red: 22/255, green: 23/255, blue: 25/255)
 let textColor = Color(red: 243/255, green: 243/255, blue: 243/255)
 let notSelected = Color(red: 139/255, green: 139/255, blue: 139/255)
 let grayButton = Color(red: 51/255, green: 51/255, blue: 51/255)
+let darkGreen = Color(red: 0.0, green: 110/255, blue: 0.0)
+
 
 
 struct startStopButton: View {
@@ -196,68 +168,145 @@ struct startStopButton: View {
     @ObservedObject var bluetoothManager = BluetoothManager.shared
     
     var body: some View {
-        Button(action: {
+        VStack {
+            
+            
+            Button(action: {
                 if !isRunning {
                     //bluetoothManager.sendStartCommand()
                 } else {
-                   // bluetoothManager.sendStopCommand()
+                    // bluetoothManager.sendStopCommand()
                 }
+                
+                
+                isRunning.toggle()
+            }, label: {
+                VStack {
+                    Image(systemName: isRunning ? "stop.fill" : "play.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
+                        .foregroundColor(textColor)
+                    
+                    
+                    
+                }
+                .padding(.horizontal)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(grayButton)
+                .cornerRadius(15)
+                .padding(.all, 20)
+            })
             
             
-            isRunning.toggle()
-        }, label: {
-            HStack {
-                Image(systemName: isRunning ? "stop.fill" : "play.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 25, height: 25)
-                    .foregroundColor(.white)
-                Text(isRunning ? "Stop" : "Start")
-                    .font(.system(size: 20))
-                    .foregroundColor(.white)
-                    .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
-            }
-            .padding(.vertical, 15)
-            .padding(.horizontal)
-            .frame(maxWidth: .infinity)
-            .background(isRunning ? Color.red : .green )
-            .cornerRadius(15)
-        })
+            Text(isRunning ? "Stop" : "Start reveal surroundings")
+                .foregroundColor(textColor)
+                .font(.system(size: 23, weight: .regular))
+                .padding(.top, 10)
+
+        }
+        
     }
 }
 
-private func getBatteryColor(for battery: Int) -> Color {
-        switch battery {
-        case ..<20:
-            return .red // Low
-        case 20...70:
-            return .yellow // Normal
-        default:
-            return .green // High
+struct FPSIndicator: View {
+    let FPS: Double
+    let minFPS: Double = 5.0
+    let maxFPS: Double = 60.0
+    
+    var color: Color {
+            if FPS < 15 {
+                return .red
+            } else if FPS >= 15 && FPS <= 40 {
+                return .green
+            } else {
+                return darkGreen
+            }
         }
-    }
+    
+    var body: some View {
+        VStack {
+            
+            ZStack {
+                Circle()
+                    .trim(from: 0.0, to: 0.78)
+                    .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .foregroundColor(Color.gray.opacity(0.3))
+                    .frame(width: 80, height: 80)
+                    .rotationEffect(.degrees(130))
+                
+                
+                Circle()
+                    .trim(from: 0.0, to: CGFloat((FPS - minFPS) / (maxFPS - minFPS)) * 0.78)
+                    .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .foregroundColor(color)
+                    .frame(width: 80, height: 80)
+                    .rotationEffect(.degrees(130))
+                
+                Text("\(Int(FPS))")
+                    .font(.system(size: 27, weight: .bold))
+                    .foregroundColor(textColor)
+                
+                Text("FPS")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(textColor)
+                    .padding(.top, 80)
 
-private func getTemperatureColor(for temperature: Int) -> Color {
-        switch temperature {
-        case ..<50:
-            return .yellow // Low
-        case 50...70:
-            return .green // Normal
-        default:
-            return .red // High
+            }
         }
+        .padding()
     }
+    
+    
+}
 
-private func getValue(for temperature: Int) -> String {
-        switch temperature {
-        case ..<50:
-            return "low"// Low
-        case 50...70:
-            return "normal" // Normal
-        default:
-            return "high" // High
+struct tempIndicator: View {
+    let temp: Double
+    let minTemp: Double = 10.0
+    let maxTemp: Double = 90.0
+    
+    var color: Color {
+            if temp < 28 {
+                return .blue
+            } else if temp >= 28 && temp <= 80 {
+                return .green
+            } else {
+                return .red
+            }
         }
+    
+    var body: some View {
+        VStack {
+            ZStack {
+                Circle()
+                    .trim(from: 0.0, to: 0.72)
+                    .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .foregroundColor(Color.gray.opacity(0.3))
+                    .frame(width: 80, height: 80)
+                    .rotationEffect(.degrees(140))
+                
+                
+                Circle()
+                    .trim(from: 0.0, to: CGFloat((temp - minTemp) / (maxTemp - minTemp)) * 0.72)
+                    .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .foregroundColor(color)
+                    .frame(width: 80, height: 80)
+                    .rotationEffect(.degrees(140))
+                
+                Text("\(Int(temp))°")
+                    .font(.system(size: 27, weight: .bold))
+                    .foregroundColor(textColor)
+                
+                Text("CPU °C")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(textColor)
+                    .padding(.top, 80)
+
+            }
+        }
+        .padding()
     }
+}
 
 #Preview {
     ReveyeView()

@@ -247,7 +247,7 @@ struct BluetoothButton: View {
 
 let natureGreen = Color(red: 169/255, green: 233/255, blue: 76/255)
 
-let darkGreen = Color(red: 34/255, green: 51/255, blue: 26/255)
+let darkGreene = Color(red: 34/255, green: 51/255, blue: 26/255)
 
 
 struct Background: View {
