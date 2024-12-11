@@ -9,13 +9,13 @@ import SwiftUI
 
 struct ReveyeView: View {
     @State var currentIcon = 1
-    @State var currentMiniView: AnyView = AnyView(powerView())
+    @State var currentMiniView: AnyView = AnyView(performanceView())
     
     var body: some View {
         VStack {
             HStack{
                 VStack {
-                    Text("My Reveye Device")
+                    Text("Ellen's Reveye Device")
                         .foregroundColor(textColor)
                         .font(.system(size: 30, weight: .semibold))
                     
@@ -87,21 +87,43 @@ struct icon: View {
 
 struct settingsView: View {
     var body: some View {
-        VStack {
+        VStack (spacing: 25){
             HStack {
                 Image("bluetooth")
                     .resizable()
                     .colorMultiply(notSelected)
                     .scaledToFit()
                     .frame(height: 30)
+                    .padding(.leading, -11)
                 
-                Text("Connected to: Reveye Device")
+                Text("Reveye Device")
                     .foregroundColor(textColor)
                     .font(.system(size: 20))
                 Spacer()
             }
             
-            Spacer()
+            HStack {
+                Text("UUID:")
+                    .foregroundColor(notSelected)
+                    .font(.system(size: 20, weight: .bold))
+                
+                Text("C38475-FMKFM03-34R9")
+                    .foregroundColor(textColor)
+                    .font(.system(size: 20))
+                Spacer()
+            }
+            
+            HStack {
+                Text("Version:")
+                    .foregroundColor(notSelected)
+                    .font(.system(size: 20, weight: .bold))
+                
+                Text("v1")
+                    .foregroundColor(textColor)
+                    .font(.system(size: 20))
+                Spacer()
+            }
+            
             
             
             Button(action: {
@@ -120,6 +142,7 @@ struct settingsView: View {
                     .cornerRadius(15)
             })
         }
+        .padding(.top, 15)
     }
 }
 
@@ -236,6 +259,9 @@ struct FPSIndicator: View {
     
     var body: some View {
         VStack {
+            Text("Frame Rate")
+                .font(.system(size: 25))
+                .foregroundColor(textColor)
             
             ZStack {
                 Circle()
@@ -287,27 +313,31 @@ struct tempIndicator: View {
     
     var body: some View {
         VStack {
+            Text("CPU Temp")
+                .font(.system(size: 25))
+                .foregroundColor(textColor)
+            
             ZStack {
                 Circle()
-                    .trim(from: 0.0, to: 0.72)
+                    .trim(from: 0.0, to: 0.83)
                     .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
                     .foregroundColor(Color.gray.opacity(0.3))
                     .frame(width: 80, height: 80)
-                    .rotationEffect(.degrees(140))
+                    .rotationEffect(.degrees(120))
                 
                 
                 Circle()
-                    .trim(from: 0.0, to: CGFloat((temp - minTemp) / (maxTemp - minTemp)) * 0.72)
+                    .trim(from: 0.0, to: CGFloat((temp - minTemp) / (maxTemp - minTemp)) * 0.83)
                     .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
                     .foregroundColor(color)
                     .frame(width: 80, height: 80)
-                    .rotationEffect(.degrees(140))
+                    .rotationEffect(.degrees(120))
                 
                 Text("\(Int(temp))°")
                     .font(.system(size: 27, weight: .bold))
                     .foregroundColor(textColor)
                 
-                Text("CPU °C")
+                Text("°C")
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(textColor)
                     .padding(.top, 80)
