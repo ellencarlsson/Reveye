@@ -8,21 +8,22 @@
 import SwiftUI
 
 struct ReveyeView: View {
-    @State private var batteryLevel: Double = 80
-    @State private var temp: CGFloat = 60
-    
-    @State var currentMiniView: AnyView = AnyView(textView())
+    @State var currentIcon = 1
+    @State var currentMiniView: AnyView = AnyView(powerView())
     
     var body: some View {
         VStack {
             HStack{
                 VStack {
-                    Text("Reveye Device")
+                    Text("My Reveye Device")
                         .foregroundColor(textColor)
                         .font(.system(size: 30, weight: .semibold))
+                    
                     Spacer()
                 }
                 Spacer()
+                
+            
                 
                 
             }
@@ -40,10 +41,10 @@ struct ReveyeView: View {
             
             
             HStack(spacing: 30) {
-                icon(iconName: "power", isActive: true, currentMiniView: $currentMiniView, newMiniView: AnyView(powerView()))
-                icon(iconName: "chat", isActive: false, currentMiniView: $currentMiniView, newMiniView: AnyView(textView()))
-                icon(iconName: "speedometer", isActive: false, currentMiniView: $currentMiniView, newMiniView: AnyView(performanceView()))
-                icon(iconName: "settings-filled", isActive: false, currentMiniView: $currentMiniView, newMiniView: AnyView(settingsView()))
+                icon(iconName: "power", iconIndex: 1, currentIcon: $currentIcon, currentMiniView: $currentMiniView, newMiniView: AnyView(powerView()))
+                icon(iconName: "chat", iconIndex: 2, currentIcon: $currentIcon, currentMiniView: $currentMiniView, newMiniView: AnyView(textView()))
+                icon(iconName: "speedometer", iconIndex: 3, currentIcon: $currentIcon, currentMiniView: $currentMiniView, newMiniView: AnyView(performanceView()))
+                icon(iconName: "settings-filled", iconIndex: 4, currentIcon: $currentIcon, currentMiniView: $currentMiniView, newMiniView: AnyView(settingsView()))
             }
             .padding(.bottom, 10)
             
@@ -62,18 +63,20 @@ struct ReveyeView: View {
 
 struct icon: View {
     let iconName: String
-    let isActive: Bool
+    let iconIndex: Int
+    @Binding var currentIcon: Int
     @Binding var currentMiniView: AnyView
     let newMiniView: AnyView // The view to display when this icon is tapped
     
     var body: some View {
         VStack {
             Button {
-                currentMiniView = newMiniView // Update the mini view
+                currentMiniView = newMiniView
+                currentIcon = iconIndex
             } label: {
                 Image(iconName)
                     .resizable()
-                    .colorMultiply(isActive ? textColor : notSelected)
+                    .colorMultiply(currentIcon == iconIndex ? textColor : notSelected)
                     .scaledToFit()
                     .frame(height: 25)
                     .padding()
@@ -134,11 +137,18 @@ struct performanceView: View {
 }
 
 struct textView: View {
+    let textArray = ["A man with a hat to the right", "Sheep herd to the left"]
+    
     var body: some View {
         
-        Text("A man with a hat to the right")
-            .foregroundColor(textColor)
-            .font(.system(size: 30))
+        VStack(spacing: 10) {
+            ForEach(0..<textArray.count, id: \.self) { index in
+                Text(textArray[index])
+                    .foregroundColor(.white)
+                    .font(.system(size: index == textArray.count - 1 ? 30 : 20, weight: index == textArray.count - 1 ? .semibold : .regular))
+            }
+
+                }
         
     }
 }
