@@ -25,7 +25,8 @@ class BluetoothManager: NSObject, ObservableObject {
     @Published var isScanning = false
     
     @Published var device_UUID = ""
-    @Published var device_Name = ""
+    @Published var device_name = ""
+    @Published var device_temp = 0.0
     
     private var connectCompletion: ((Bool) -> Void)?
     
@@ -92,6 +93,7 @@ class BluetoothManager: NSObject, ObservableObject {
             cbManager.cancelPeripheralConnection(peripheral)
             print("Disconnected from peripheral.")
             isConnected = false
+            startScanning()
         }
     }
 }
@@ -130,7 +132,7 @@ extension BluetoothManager: CBCentralManagerDelegate {
         peripheral.discoverServices([serviceUUID])
         self.isConnected = true
         
-        device_Name = "\(peripheral.name!)"
+        device_name = "\(peripheral.name!)"
         device_UUID = "\(String(describing: peripheral.identifier))"
         
         connectCompletion?(true)  // Notify success
@@ -199,7 +201,13 @@ extension BluetoothManager: CBPeripheralDelegate {
         }
         
         if characteristic.uuid == uartTXUUID, let data = characteristic.value, let receivedText = String(data: data, encoding: .utf8) {
-            print("Received data: \(receivedText)")
+            if receivedText.starts(with: "Temp:") {
+                let tempString = receivedText.dropFirst(5).trimmingCharacters(in: .whitespaces)
+                device_temp = Double(tempString) ?? 0.0
+            } else {
+                print("Received data: \(receivedText)")
+            }
+            
         }
     }
 }

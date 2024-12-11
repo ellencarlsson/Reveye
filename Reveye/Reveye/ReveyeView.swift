@@ -91,7 +91,7 @@ struct settingsView: View {
                     .foregroundColor(notSelected)
                     .font(.system(size: 17, weight: .bold))
                 
-                Text("\(bluetoothManager.device_Name)")
+                Text("\(bluetoothManager.device_name)")
                     .foregroundColor(textColor)
                     .font(.system(size: 17))
                 Spacer()
@@ -142,9 +142,11 @@ struct settingsView: View {
 }
 
 struct performanceView: View {
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
+
     var body: some View {
         HStack {
-            tempIndicator(temp: 20)
+            tempIndicator(temp: bluetoothManager.device_temp)
             FPSIndicator(FPS: 12)
         }
         
@@ -292,8 +294,8 @@ struct FPSIndicator: View {
 
 struct tempIndicator: View {
     let temp: Double
-    let minTemp: Double = 10.0
-    let maxTemp: Double = 90.0
+    let minTemp: Double = 10
+    let maxTemp: Double = 90
     
     var color: Color {
             if temp < 28 {
@@ -327,9 +329,15 @@ struct tempIndicator: View {
                     .frame(width: 80, height: 80)
                     .rotationEffect(.degrees(120))
                 
-                Text("\(Int(temp))°")
-                    .font(.system(size: 27, weight: .bold))
-                    .foregroundColor(textColor)
+                if temp == 0.0 {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.white.opacity(0.7)))
+                } else {
+                    Text("\(Int(temp))°")
+                        .font(.system(size: 27, weight: .bold))
+                        .foregroundColor(textColor)
+                }
+                
                 
                 Text("°C")
                     .font(.system(size: 17, weight: .bold))
