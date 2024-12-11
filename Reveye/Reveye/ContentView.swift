@@ -8,8 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
+
     var body: some View {
-        MainView()
+        if bluetoothManager.isConnected {
+            ReveyeView()
+        } else {
+            ConnectView()
+        }
     }
 }
 

@@ -24,6 +24,9 @@ class BluetoothManager: NSObject, ObservableObject {
     @Published var isConnected = false
     @Published var isScanning = false
     
+    @Published var device_UUID = ""
+    @Published var device_Name = ""
+    
     private var connectCompletion: ((Bool) -> Void)?
     
     private override init() {
@@ -99,6 +102,7 @@ extension BluetoothManager: CBCentralManagerDelegate {
         switch central.state {
         case .poweredOn:
             print("Bluetooth is powered on.")
+            startScanning()
         case .poweredOff:
             print("Bluetooth is powered off.")
         case .resetting:
@@ -125,8 +129,13 @@ extension BluetoothManager: CBCentralManagerDelegate {
         print("Connected to peripheral: \(peripheral.name ?? "Unknown")")
         peripheral.discoverServices([serviceUUID])
         self.isConnected = true
+        
+        device_Name = "\(peripheral.name!)"
+        device_UUID = "\(String(describing: peripheral.identifier))"
+        
         connectCompletion?(true)  // Notify success
         connectCompletion = nil
+        
     }
     
     
