@@ -8,39 +8,111 @@
 import SwiftUI
 
 struct ConnectView: View {
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
+    @State var showLoading = false
+    
     var body: some View {
-        VStack(spacing: 40) { // Add consistent spacing between elements
-                    // Header Text
-                    VStack(alignment: .center, spacing: 8) {
-                        Text("Reveye")
-                            .foregroundColor(textColor)
-                            .font(.system(size: 32, weight: .bold)) // Use bold for the header
-                            .multilineTextAlignment(.center)
-
-                        Text("Connect to a Reveye Device to get started")
-                            .foregroundColor(.gray)
-                            .font(.system(size: 18)) // Slightly smaller and lighter font for secondary text
-                            .multilineTextAlignment(.center)
+        VStack(spacing: 40) {
+            VStack(alignment: .center, spacing: 8) {
+                Text("Reveye")
+                    .foregroundColor(textColor)
+                    .font(.system(size: 70, weight: .bold))
+                    .multilineTextAlignment(.center)
+                
+                Text("Select a Reveye Device to get started")
+                    .foregroundColor(.gray)
+                    .font(.system(size: 20))
+                    .multilineTextAlignment(.center)
+            }
+            
+            VStack {
+                if bluetoothManager.peripherals.isEmpty {
+                    if bluetoothManager.isScanning {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: Color.white.opacity(0.7)))
+                        
+                    } else {
+                        HStack {
+                            Image("bluetooth")
+                                .resizable()
+                                .colorMultiply(notSelected)
+                                .scaledToFit()
+                                .frame(height: 25)
+                            
+                            Text("No devices found")
+                                .foregroundColor(.gray)
+                        }
+                            
                     }
-
-                    // Connect Button
-                    Button(action: {
-                        // Your connection action here
-                    }) {
-                        Text("Connect")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.vertical, 15)
-                            .padding(.horizontal, 30)
-                            .frame(maxWidth: .infinity)
-                            .background(Color.blue)
-                            .cornerRadius(12)
-                            .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                    
+                } else {
+                    ScrollView {
+                        VStack(spacing: 10) {
+                            ForEach(Array(bluetoothManager.peripherals.enumerated()), id: \.element.identifier) { index, peripheral in
+                                Button(action: {
+                                    showLoading = true
+                                    bluetoothManager.connectToPeripheral(peripheral, completion: {success in
+                                        
+                                        if success {
+                                            bluetoothManager.stopScanning()
+                                            
+                                            showLoading = false
+                                        } else {
+                                            // could not connect
+                                        }
+                                        
+                                    })
+                                    
+                                }) {
+                                    HStack {
+                                        
+                                        Text(peripheral.name ?? "Unknown Device")
+                                            .font(.system(size: 18, weight: .medium))
+                                            .foregroundColor(textColor)
+                                        
+                                        if showLoading {
+                                            Spacer()
+                                            VStack {
+                                                Text("Scanning...")
+                                                    .foregroundColor(.gray)
+                                                
+                                                ProgressView()
+                                                    .progressViewStyle(CircularProgressViewStyle(tint: Color.white.opacity(0.7)))
+                                            }
+                                            
+                                        } else {
+                                            Spacer()
+                                        }
+                                        
+                                    }
+                                    .padding(.vertical, 5)
+                                    
+                                }
+                                
+                                if index < bluetoothManager.peripherals.count - 1 {
+                                    Divider()
+                                        .background(Color.white)
+                                        .padding(.horizontal, 3)
+                                }
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(grayButton)
+                        .cornerRadius(15)
                     }
                 }
-                .padding(30)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(darkGray.ignoresSafeArea())
+            }
+
+            
+            
+            
+            Spacer()
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(darkGray.ignoresSafeArea())
+
     }
 }
 

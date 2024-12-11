@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ReveyeView: View {
     @State var currentIcon = 1
-    @State var currentMiniView: AnyView = AnyView(performanceView())
+    @State var currentMiniView: AnyView = AnyView(powerView())
     
     var body: some View {
         VStack {
@@ -21,10 +21,6 @@ struct ReveyeView: View {
                     
                     Spacer()
                 }
-                Spacer()
-                
-            
-                
                 
             }
             
@@ -86,55 +82,54 @@ struct icon: View {
 }
 
 struct settingsView: View {
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
+
     var body: some View {
         VStack (spacing: 25){
             HStack {
-                Image("bluetooth")
-                    .resizable()
-                    .colorMultiply(notSelected)
-                    .scaledToFit()
-                    .frame(height: 30)
-                    .padding(.leading, -11)
+                Text("Connected:")
+                    .foregroundColor(notSelected)
+                    .font(.system(size: 17, weight: .bold))
                 
-                Text("Reveye Device")
+                Text("\(bluetoothManager.device_Name)")
                     .foregroundColor(textColor)
-                    .font(.system(size: 20))
+                    .font(.system(size: 17))
                 Spacer()
             }
             
             HStack {
-                Text("UUID:")
-                    .foregroundColor(notSelected)
-                    .font(.system(size: 20, weight: .bold))
-                
-                Text("C38475-FMKFM03-34R9")
-                    .foregroundColor(textColor)
-                    .font(.system(size: 20))
-                Spacer()
+                Text("UUID: ")
+                        .foregroundColor(notSelected)
+                        .font(.system(size: 17, weight: .bold))
+                    
+                Text("\(bluetoothManager.device_UUID)")
+                        .foregroundColor(textColor)
+                        .font(.system(size: 17))
+                        .lineLimit(nil)
+
+                    Spacer()
             }
+
             
             HStack {
                 Text("Version:")
                     .foregroundColor(notSelected)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
                 
                 Text("v1")
                     .foregroundColor(textColor)
-                    .font(.system(size: 20))
+                    .font(.system(size: 17))
                 Spacer()
-            }
-            
-            
+            }            
             
             Button(action: {
-                
+                bluetoothManager.disconnectFromPeripheral()
             }, label: {
                 
                 Text("Disconnect")
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white)
                     .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
-                
                     .padding(.vertical, 15)
                     .padding(.horizontal)
                     .frame(maxWidth: .infinity)
@@ -181,9 +176,7 @@ struct powerView: View {
     @ObservedObject var bluetoothManager = BluetoothManager.shared
     
     var body: some View {
-        
         startStopButton()
-        
         
     }
 }
@@ -193,6 +186,8 @@ let textColor = Color(red: 243/255, green: 243/255, blue: 243/255)
 let notSelected = Color(red: 139/255, green: 139/255, blue: 139/255)
 let grayButton = Color(red: 51/255, green: 51/255, blue: 51/255)
 let darkGreen = Color(red: 0.0, green: 110/255, blue: 0.0)
+let gray = Color(red: 33/255, green: 34/255, blue: 36/255)
+
 
 
 
@@ -206,11 +201,10 @@ struct startStopButton: View {
             
             Button(action: {
                 if !isRunning {
-                    //bluetoothManager.sendStartCommand()
+                    bluetoothManager.sendStartCommand()
                 } else {
-                    // bluetoothManager.sendStopCommand()
+                    bluetoothManager.sendStopCommand()
                 }
-                
                 
                 isRunning.toggle()
             }, label: {
