@@ -85,13 +85,30 @@ struct settingsView: View {
     @ObservedObject var bluetoothManager = BluetoothManager.shared
 
     var body: some View {
-        VStack (spacing: 25){
+        VStack (spacing: 20){
             HStack {
-                Text("Connected:")
-                    .foregroundColor(notSelected)
-                    .font(.system(size: 17, weight: .bold))
+                Image("bluetooth")
+                    .resizable()
+                    .colorMultiply(notSelected)
+                    .scaledToFit()
+                    .frame(height: 25)
+                
                 
                 Text("\(bluetoothManager.device_name)")
+                    .foregroundColor(textColor)
+                    .font(.system(size: 17))
+                Spacer()
+            }
+            
+            HStack {
+                Image("wi-fi")
+                    .resizable()
+                    .colorMultiply(notSelected)
+                    .scaledToFit()
+                    .frame(height: 25)
+                
+                
+                Text("\(bluetoothManager.device_wifi)")
                     .foregroundColor(textColor)
                     .font(.system(size: 17))
                 Spacer()

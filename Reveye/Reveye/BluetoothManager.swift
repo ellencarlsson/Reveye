@@ -27,6 +27,8 @@ class BluetoothManager: NSObject, ObservableObject {
     @Published var device_UUID = ""
     @Published var device_name = ""
     @Published var device_temp = 0.0
+    @Published var device_wifi = ""
+
     
     private var connectCompletion: ((Bool) -> Void)?
     
@@ -63,28 +65,27 @@ class BluetoothManager: NSObject, ObservableObject {
         self.connectCompletion = completion
     }
 
-    
-    
-    func sendStartCommand() {
+    func sendCommand(command: String) {
         guard let uartRXCharacteristic = uartRXCharacteristic else {
             print("RX Characteristic not found.")
             return
         }
-        let text = "start"
+        let text = command
         let data = text.data(using: .utf8)!
         connectedPeripheral?.writeValue(data, for: uartRXCharacteristic, type: .withResponse)
         print("Sent start command")
     }
     
+    func sendStartCommand() {
+        sendCommand(command: "start")
+    }
+    
     func sendStopCommand() {
-        guard let uartRXCharacteristic = uartRXCharacteristic else {
-            print("RX Characteristic not found.")
-            return
-        }
-        let text = "stop"
-        let data = text.data(using: .utf8)!
-        connectedPeripheral?.writeValue(data, for: uartRXCharacteristic, type: .withResponse)
-        print("Sent stop command")
+        sendCommand(command: "stop")
+    }
+    
+    func sendConnectedCommand() {
+        sendCommand(command: "connected")
     }
     
     // Disconnect from the peripheral
@@ -190,6 +191,7 @@ extension BluetoothManager: CBPeripheralDelegate {
             if let uartTX = uartTXCharacteristic {
                 peripheral.setNotifyValue(true, for: uartTX)
                 print("Enabled notifications for TX characteristic.")
+                sendConnectedCommand()
             }
         }
     }
@@ -202,9 +204,14 @@ extension BluetoothManager: CBPeripheralDelegate {
         
         if characteristic.uuid == uartTXUUID, let data = characteristic.value, let receivedText = String(data: data, encoding: .utf8) {
             if receivedText.starts(with: "Temp:") {
-                let tempString = receivedText.dropFirst(5).trimmingCharacters(in: .whitespaces)
-                device_temp = Double(tempString) ?? 0.0
-            } else {
+                let temp = receivedText.dropFirst(5).trimmingCharacters(in: .whitespaces)
+                device_temp = Double(temp) ?? 0.0
+                
+            } else if receivedText.starts(with: "Wifi:") {
+                let wifi = receivedText.dropFirst(5).trimmingCharacters(in: .whitespaces)
+                device_wifi = wifi
+                
+            }  else {
                 print("Received data: \(receivedText)")
             }
             
