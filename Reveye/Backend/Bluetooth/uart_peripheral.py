@@ -6,7 +6,7 @@ from advertisement import Advertisement
 from advertisement import register_ad_cb, register_ad_error_cb
 from gatt_server import Service, Characteristic
 from gatt_server import register_app_cb, register_app_error_cb
-from Hardware.raspberrypi import get_cpu_temp
+from Hardware.raspberrypi import *
 from time import time
 
 BLUEZ_SERVICE_NAME =           'org.bluez'
@@ -61,15 +61,32 @@ class TxCharacteristic(Characteristic):
         Characteristic.__init__(self, bus, index, UART_TX_CHARACTERISTIC_UUID,
                                 ['notify'], service)
         self.notifying = False
+        
+
         GLib.io_add_watch(sys.stdin, GLib.IO_IN, self.on_console_input)
+
         self.last_notify_time = time()
         GLib.timeout_add(10000, self.send_cpu)
+
+    def StartNotify(self):
+        if self.notifying:
+            return
+        self.notifying = True
+        print("StartNotify called: Notifications are now enabled.")
 
     def send_cpu(self):
         cpu_temp = get_cpu_temp() 
         # This method will be called every 30 seconds
         self.send_tx(f"Temp:{cpu_temp}")  # Send notification text
         self.last_notify_time = time()  # Reset the timer
+
+        return True
+
+    def send_wifi(self):
+        print("send wifi")
+        wifi = get_connected_wifi() 
+        self.send_tx(f"Wifi:{wifi}")  # Send notification text
+        print("sent?")
 
         return True
 
@@ -101,6 +118,7 @@ class TxCharacteristic(Characteristic):
         if self.notifying:
             return
         self.notifying = True
+        self.send_wifi()
 
     def StopNotify(self):
         if not self.notifying:
@@ -110,10 +128,11 @@ class TxCharacteristic(Characteristic):
 class RxCharacteristic(Characteristic):
     def __init__(self, bus, index, service):
         Characteristic.__init__(self, bus, index, UART_RX_CHARACTERISTIC_UUID,
-                                ['write'], service)
+                                ['write'], service)    
 
     def WriteValue(self, value, options):
-        print('command: {}'.format(bytearray(value).decode()))
+        command = bytearray(value).decode()
+        print(f'command: {command}')
 
 class UartService(Service):
     def __init__(self, bus, index):
