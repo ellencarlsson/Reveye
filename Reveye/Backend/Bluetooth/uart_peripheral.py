@@ -20,7 +20,7 @@ UART_TX_CHARACTERISTIC_UUID =  '6e400003-b5a3-f393-e0a9-e50e24dcca9e'
 LOCAL_NAME =                   'Reveye Device'
 mainloop = None
 
-class PairingAgent(dbus.service.Object):
+class PairingAgent(dbus.service.Object):  
     AGENT_PATH = "/test/agent"
 
     def __init__(self, bus):
