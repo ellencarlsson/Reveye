@@ -1,5 +1,7 @@
 import os
 import subprocess
+import socket
+
 
 def get_cpu_temp():
 
@@ -67,3 +69,21 @@ def get_connected_wifi():
             return None
     except subprocess.CalledProcessError:
         return None
+
+
+def get_ip_address():
+    try:
+        # Create a socket and connect to an external address
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Doesn't actually have to connect
+        s.connect(("8.8.8.8", 80))
+        ip_address = s.getsockname()[0]  # Get the IP address
+        s.close()
+        return ip_address
+    except Exception as e:
+        print("No ip adress was found")
+        return ""
+
+if __name__ == "__main__":
+    print("IP Address:", get_ip_address())
+

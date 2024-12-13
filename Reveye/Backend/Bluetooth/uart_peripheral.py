@@ -6,7 +6,7 @@ from advertisement import Advertisement
 from advertisement import register_ad_cb, register_ad_error_cb
 from gatt_server import Service, Characteristic
 from gatt_server import register_app_cb, register_app_error_cb
-from Hardware.raspberrypi import *
+from Hardware.RaspberryPi.raspberrypi import *
 from time import time
 
 BLUEZ_SERVICE_NAME =           'org.bluez'
@@ -86,9 +86,15 @@ class TxCharacteristic(Characteristic):
         print("send wifi")
         wifi = get_connected_wifi() 
         self.send_tx(f"Wifi:{wifi}")  # Send notification text
-        print("sent?")
 
         return True
+
+    def send_ip(self):
+        ip = get_ip_address()
+        print("nu är ip:")
+        print(ip)
+        self.send_tx(f"IP:{ip}")
+        return true
 
     def on_console_input(self, fd, condition):
         s = fd.readline()
@@ -102,6 +108,8 @@ class TxCharacteristic(Characteristic):
         if not self.notifying:
             return
         
+        print("skickar detta:")
+        print(s)
         # Create a list to hold individual bytes for each character
         value = []
 
@@ -119,6 +127,7 @@ class TxCharacteristic(Characteristic):
             return
         self.notifying = True
         self.send_wifi()
+        self.send_ip()
 
     def StopNotify(self):
         if not self.notifying:
