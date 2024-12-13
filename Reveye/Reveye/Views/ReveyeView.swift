@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import AVKit
 
 struct ReveyeView: View {
     @State var currentIcon = 1
     @State var currentMiniView: AnyView = AnyView(powerView())
     @ObservedObject var bluetoothManager = BluetoothManager.shared
+    @State private var player: AVPlayer?
     
     var body: some View {
         VStack {
@@ -57,10 +59,24 @@ struct ReveyeView: View {
                                 .font(.system(size: 17))
                         } else {
                             
+                            if bluetoothManager.canStream {
+                                WebView(url: URL(string: bluetoothManager.device_streamURL)!)
+                                            .edgesIgnoringSafeArea(.all)
+                            }
+                                
+                            
+                            
                         }
                         
                     }
                     .tag(1)
+                    .onAppear(perform: {
+                        Task {
+                            await bluetoothManager.getStreamURL()
+
+                        }
+                    })
+                    
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
                 .background(darkGray)
