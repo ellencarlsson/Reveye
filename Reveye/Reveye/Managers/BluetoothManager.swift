@@ -11,6 +11,8 @@ import Foundation
 class BluetoothManager: NSObject, ObservableObject {
     static let shared = BluetoothManager()
     
+    private let streamManager = StreamManager()
+    
     private var cbManager: CBCentralManager!
     private var connectedPeripheral: CBPeripheral?
     private var uartRXCharacteristic: CBCharacteristic?
@@ -27,6 +29,12 @@ class BluetoothManager: NSObject, ObservableObject {
     @Published var device_UUID = ""
     @Published var device_name = ""
     @Published var device_temp = 0.0
+    @Published var device_wifi = ""
+    @Published var device_streamURL = ""
+    @Published var canStream = false
+    
+    var device_ip = ""
+
     
     private var connectCompletion: ((Bool) -> Void)?
     
@@ -34,6 +42,33 @@ class BluetoothManager: NSObject, ObservableObject {
         super.init()
         cbManager = CBCentralManager(delegate: self, queue: nil)
     }
+    
+    func getStreamURL() async {
+        guard !device_ip.isEmpty else {
+            print("Device ip was empty: " + device_ip)
+            return
+        }
+        
+        let urlString = "http://\(device_ip):5000/reveye_stream"
+        
+        DispatchQueue.main.async {
+            self.device_streamURL = urlString
+        }
+        
+
+        let isReachable = await streamManager.checkVideoURL(urlString: urlString)
+        
+        if isReachable == true {
+            DispatchQueue.main.async {
+                self.canStream = true
+
+            }
+            
+        } else {
+            print("Video link is not reachable")
+        }
+    }
+
     
     // Start scanning for peripherals that match the service UUID
     func startScanning() {
@@ -63,28 +98,23 @@ class BluetoothManager: NSObject, ObservableObject {
         self.connectCompletion = completion
     }
 
-    
-    
-    func sendStartCommand() {
+    func sendCommand(command: String) {
         guard let uartRXCharacteristic = uartRXCharacteristic else {
             print("RX Characteristic not found.")
             return
         }
-        let text = "start"
+        let text = command
         let data = text.data(using: .utf8)!
         connectedPeripheral?.writeValue(data, for: uartRXCharacteristic, type: .withResponse)
-        print("Sent start command")
+        print("Sent \(text) command")
+    }
+    
+    func sendStartCommand() {
+        sendCommand(command: "start")
     }
     
     func sendStopCommand() {
-        guard let uartRXCharacteristic = uartRXCharacteristic else {
-            print("RX Characteristic not found.")
-            return
-        }
-        let text = "stop"
-        let data = text.data(using: .utf8)!
-        connectedPeripheral?.writeValue(data, for: uartRXCharacteristic, type: .withResponse)
-        print("Sent stop command")
+        sendCommand(command: "stop")
     }
     
     // Disconnect from the peripheral
@@ -202,8 +232,17 @@ extension BluetoothManager: CBPeripheralDelegate {
         
         if characteristic.uuid == uartTXUUID, let data = characteristic.value, let receivedText = String(data: data, encoding: .utf8) {
             if receivedText.starts(with: "Temp:") {
-                let tempString = receivedText.dropFirst(5).trimmingCharacters(in: .whitespaces)
-                device_temp = Double(tempString) ?? 0.0
+                let temp = receivedText.dropFirst(5).trimmingCharacters(in: .whitespaces)
+                device_temp = Double(temp) ?? 0.0
+                
+            } else if receivedText.starts(with: "Wifi:") {
+                let wifi = receivedText.dropFirst(5).trimmingCharacters(in: .whitespaces)
+                device_wifi = wifi
+                
+            } else if receivedText.starts(with: "IP:") {
+                let ip = receivedText.dropFirst(3).trimmingCharacters(in: .whitespaces)
+                device_ip = ip
+                
             } else {
                 print("Received data: \(receivedText)")
             }

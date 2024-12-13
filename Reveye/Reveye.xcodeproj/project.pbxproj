@@ -12,6 +12,7 @@
 		C103D5282CFB246F00EB7507 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C103D5272CFB246F00EB7507 /* Assets.xcassets */; };
 		C103D52B2CFB246F00EB7507 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C103D52A2CFB246F00EB7507 /* Preview Assets.xcassets */; };
 		C103D5322CFB28FB00EB7507 /* Icons.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C103D5312CFB28FB00EB7507 /* Icons.xcassets */; };
+		C12E9DD62D0CAC4B004E88B2 /* StreamManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C12E9DD52D0CAC4B004E88B2 /* StreamManager.swift */; };
 		C135E55F2D03074900177EF1 /* ExternalAccessory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C135E55E2D03074900177EF1 /* ExternalAccessory.framework */; };
 		C152CD602D08D3B80036440D /* ReveyeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C152CD5F2D08D3B80036440D /* ReveyeView.swift */; };
 		C152CD622D08F6620036440D /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C152CD612D08F6620036440D /* ConnectView.swift */; };
@@ -25,6 +26,7 @@
 		C103D5272CFB246F00EB7507 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C103D52A2CFB246F00EB7507 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C103D5312CFB28FB00EB7507 /* Icons.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Icons.xcassets; sourceTree = "<group>"; };
+		C12E9DD52D0CAC4B004E88B2 /* StreamManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamManager.swift; sourceTree = "<group>"; };
 		C135E55E2D03074900177EF1 /* ExternalAccessory.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExternalAccessory.framework; path = System/Library/Frameworks/ExternalAccessory.framework; sourceTree = SDKROOT; };
 		C135E5602D03077000177EF1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C152CD5F2D08D3B80036440D /* ReveyeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReveyeView.swift; sourceTree = "<group>"; };
@@ -64,15 +66,13 @@
 		C103D5222CFB246E00EB7507 /* Reveye */ = {
 			isa = PBXGroup;
 			children = (
+				C12E9DD42D0CAC1D004E88B2 /* Views */,
+				C12E9DD32D0CAC17004E88B2 /* Managers */,
 				C135E5602D03077000177EF1 /* Info.plist */,
 				C103D5232CFB246E00EB7507 /* ReveyeApp.swift */,
-				C103D5252CFB246E00EB7507 /* ContentView.swift */,
 				C103D5272CFB246F00EB7507 /* Assets.xcassets */,
 				C103D5292CFB246F00EB7507 /* Preview Content */,
 				C103D5312CFB28FB00EB7507 /* Icons.xcassets */,
-				C152CD5F2D08D3B80036440D /* ReveyeView.swift */,
-				C1F24DF32CFB58F400C14AC6 /* BluetoothManager.swift */,
-				C152CD612D08F6620036440D /* ConnectView.swift */,
 			);
 			path = Reveye;
 			sourceTree = "<group>";
@@ -83,6 +83,25 @@
 				C103D52A2CFB246F00EB7507 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		C12E9DD32D0CAC17004E88B2 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				C1F24DF32CFB58F400C14AC6 /* BluetoothManager.swift */,
+				C12E9DD52D0CAC4B004E88B2 /* StreamManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		C12E9DD42D0CAC1D004E88B2 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C152CD5F2D08D3B80036440D /* ReveyeView.swift */,
+				C152CD612D08F6620036440D /* ConnectView.swift */,
+				C103D5252CFB246E00EB7507 /* ContentView.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 		C135E55D2D03074900177EF1 /* Frameworks */ = {
@@ -164,6 +183,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C12E9DD62D0CAC4B004E88B2 /* StreamManager.swift in Sources */,
 				C103D5262CFB246E00EB7507 /* ContentView.swift in Sources */,
 				C152CD602D08D3B80036440D /* ReveyeView.swift in Sources */,
 				C152CD622D08F6620036440D /* ConnectView.swift in Sources */,
@@ -307,6 +327,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Reveye/Info.plist;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses Bluetooth to connect to and interact with Reveye devices.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "This app uses local network to connect with Reveye";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -338,6 +359,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Reveye/Info.plist;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses Bluetooth to connect to and interact with Reveye devices.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "This app uses local network to connect with Reveye";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

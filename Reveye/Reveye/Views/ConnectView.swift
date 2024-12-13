@@ -28,8 +28,13 @@ struct ConnectView: View {
             VStack {
                 if bluetoothManager.peripherals.isEmpty {
                     if bluetoothManager.isScanning {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: Color.white.opacity(0.7)))
+                        VStack {
+                            Text("Scanning...")
+                                .foregroundColor(.gray)
+                            
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: Color.white.opacity(0.7)))
+                        }
                         
                     } else {
                         HStack {
@@ -72,13 +77,10 @@ struct ConnectView: View {
                                         
                                         if showLoading {
                                             Spacer()
-                                            VStack {
-                                                Text("Scanning...")
-                                                    .foregroundColor(.gray)
-                                                
+                                            
                                                 ProgressView()
                                                     .progressViewStyle(CircularProgressViewStyle(tint: Color.white.opacity(0.7)))
-                                            }
+                                            
                                             
                                         } else {
                                             Spacer()

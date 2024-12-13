@@ -6,38 +6,90 @@
 //
 
 import SwiftUI
+import AVKit
 
 struct ReveyeView: View {
     @State var currentIcon = 1
     @State var currentMiniView: AnyView = AnyView(powerView())
+    @ObservedObject var bluetoothManager = BluetoothManager.shared
+    @State private var player: AVPlayer?
     
     var body: some View {
         VStack {
-            HStack{
-                VStack {
-                    Text("Ellen's Reveye Device")
+            VStack{
+                HStack {
+                    
+                    Text("Reveye Device")
                         .foregroundColor(textColor)
                         .font(.system(size: 30, weight: .semibold))
-                    
-                    Spacer()
                 }
+                
                 
             }
             
-            Image("ReveyeDevice")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 260)
-                .shadow(color: Color.white.opacity(0.2), radius: 80)
-                .shadow(color: Color.black.opacity(0.5), radius: 10)
-                .padding()
-                .padding(.bottom, 30)
-            
-            
-            
-            
+            ZStack {
+                Color.black.edgesIgnoringSafeArea(.all) // Your desired 
+                
+
+                TabView {
+                    VStack {
+                        Image("ReveyeDevice")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 260)
+                            .shadow(color: Color.white.opacity(0.2), radius: 80)
+                            .shadow(color: Color.black.opacity(0.5), radius: 10)
+                            .padding()
+                            .padding(.bottom, 30)
+                    }
+                    .tag(0)
+                    
+                    VStack {
+                        if bluetoothManager.device_wifi == "" {
+                            Image("no-wifi")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 100)
+                                .colorMultiply(notSelected)
+                                .padding(.bottom, 35)
+                            
+                            Text("Unable to display video. Ensure you are connected to Wi-Fi.")
+                                .foregroundColor(notSelected)
+                                .multilineTextAlignment(.center)
+                                .font(.system(size: 17))
+                        } else {
+                            
+                            if bluetoothManager.canStream {
+                                VStack {
+                                    Spacer()
+                                                    .frame(height: 50)
+                                    WebView(url: URL(string: bluetoothManager.device_streamURL)!)
+                                                .edgesIgnoringSafeArea(.all)
+                                                .background(darkGray) 
+                                }
+                                
+                            }
+                                
+                            
+                            
+                        }
+                        
+                    }
+                    .tag(1)
+                    .onAppear(perform: {
+                        Task {
+                            await bluetoothManager.getStreamURL()
+
+                        }
+                    })
+                    
+                }
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
+                .background(darkGray)
+            }
+
             HStack(spacing: 30) {
-                icon(iconName: "power", iconIndex: 1, currentIcon: $currentIcon, currentMiniView: $currentMiniView, newMiniView: AnyView(powerView()))
+                icon(iconName: "eye-open", iconIndex: 1, currentIcon: $currentIcon, currentMiniView: $currentMiniView, newMiniView: AnyView(powerView()))
                 icon(iconName: "chat", iconIndex: 2, currentIcon: $currentIcon, currentMiniView: $currentMiniView, newMiniView: AnyView(textView()))
                 icon(iconName: "speedometer", iconIndex: 3, currentIcon: $currentIcon, currentMiniView: $currentMiniView, newMiniView: AnyView(performanceView()))
                 icon(iconName: "settings-filled", iconIndex: 4, currentIcon: $currentIcon, currentMiniView: $currentMiniView, newMiniView: AnyView(settingsView()))
@@ -74,7 +126,7 @@ struct icon: View {
                     .resizable()
                     .colorMultiply(currentIcon == iconIndex ? textColor : notSelected)
                     .scaledToFit()
-                    .frame(height: 25)
+                    .frame(height: 30)
                     .padding()
             }
         }
@@ -83,13 +135,16 @@ struct icon: View {
 
 struct settingsView: View {
     @ObservedObject var bluetoothManager = BluetoothManager.shared
-
+    
     var body: some View {
-        VStack (spacing: 25){
+        VStack (spacing: 20){
             HStack {
-                Text("Connected:")
-                    .foregroundColor(notSelected)
-                    .font(.system(size: 17, weight: .bold))
+                Image("bluetooth")
+                    .resizable()
+                    .colorMultiply(notSelected)
+                    .scaledToFit()
+                    .frame(height: 25)
+                
                 
                 Text("\(bluetoothManager.device_name)")
                     .foregroundColor(textColor)
@@ -98,18 +153,42 @@ struct settingsView: View {
             }
             
             HStack {
-                Text("UUID: ")
-                        .foregroundColor(notSelected)
-                        .font(.system(size: 17, weight: .bold))
+                if bluetoothManager.device_wifi == "" {
+                    Image("no-wifi")
+                        .resizable()
+                        .colorMultiply(notSelected)
+                        .scaledToFit()
+                        .frame(height: 25)
                     
-                Text("\(bluetoothManager.device_UUID)")
+                } else {
+                    Image("wi-fi")
+                        .resizable()
+                        .colorMultiply(notSelected)
+                        .scaledToFit()
+                        .frame(height: 25)
+                    
+                    
+                    Text("\(bluetoothManager.device_wifi)")
                         .foregroundColor(textColor)
                         .font(.system(size: 17))
-                        .lineLimit(nil)
-
-                    Spacer()
+                }
+                
+                Spacer()
             }
-
+            
+            HStack {
+                Text("UUID: ")
+                    .foregroundColor(notSelected)
+                    .font(.system(size: 17, weight: .bold))
+                
+                Text("\(bluetoothManager.device_UUID)")
+                    .foregroundColor(textColor)
+                    .font(.system(size: 17))
+                    .lineLimit(nil)
+                
+                Spacer()
+            }
+            
             
             HStack {
                 Text("Version:")
@@ -120,7 +199,7 @@ struct settingsView: View {
                     .foregroundColor(textColor)
                     .font(.system(size: 17))
                 Spacer()
-            }            
+            }
             
             Button(action: {
                 bluetoothManager.disconnectFromPeripheral()
@@ -143,7 +222,7 @@ struct settingsView: View {
 
 struct performanceView: View {
     @ObservedObject var bluetoothManager = BluetoothManager.shared
-
+    
     var body: some View {
         HStack {
             tempIndicator(temp: bluetoothManager.device_temp)
@@ -167,8 +246,8 @@ struct textView: View {
                     .foregroundColor(.white)
                     .font(.system(size: index == textArray.count - 1 ? 30 : 20, weight: index == textArray.count - 1 ? .semibold : .regular))
             }
-
-                }
+            
+        }
         
     }
 }
@@ -178,7 +257,12 @@ struct powerView: View {
     @ObservedObject var bluetoothManager = BluetoothManager.shared
     
     var body: some View {
-        startStopButton()
+        VStack {
+            
+            
+            startStopButton()
+        }
+        
         
     }
 }
@@ -198,9 +282,7 @@ struct startStopButton: View {
     @ObservedObject var bluetoothManager = BluetoothManager.shared
     
     var body: some View {
-        VStack {
-            
-            
+       
             Button(action: {
                 if !isRunning {
                     bluetoothManager.sendStartCommand()
@@ -211,30 +293,32 @@ struct startStopButton: View {
                 isRunning.toggle()
             }, label: {
                 VStack {
-                    Image(systemName: isRunning ? "stop.fill" : "play.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 40, height: 40)
+                    VStack {
+                        Image(!isRunning ? "eye-closed" : "eye-open")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 50)
+                            .foregroundColor(textColor)
+                        
+                        
+                        
+                        
+                    }
+                    .padding(.horizontal)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(grayButton)
+                    .cornerRadius(15)
+                    .padding(.all, 20)
+                    
+                    Text(isRunning ? "STOP" : "START")
                         .foregroundColor(textColor)
-                    
-                    
-                    
+                        .font(.system(size: 30, weight: .regular))
+                        .kerning(7)
+                        .padding(.top, 4)
                 }
-                .padding(.horizontal)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(grayButton)
-                .cornerRadius(15)
-                .padding(.all, 20)
+                
             })
-            
-            
-            Text(isRunning ? "Stop" : "Start reveal surroundings")
-                .foregroundColor(textColor)
-                .font(.system(size: 23, weight: .regular))
-                .padding(.top, 10)
-
-        }
-        
+                   
     }
 }
 
@@ -244,14 +328,14 @@ struct FPSIndicator: View {
     let maxFPS: Double = 60.0
     
     var color: Color {
-            if FPS < 15 {
-                return .red
-            } else if FPS >= 15 && FPS <= 40 {
-                return .green
-            } else {
-                return darkGreen
-            }
+        if FPS < 15 {
+            return .red
+        } else if FPS >= 15 && FPS <= 40 {
+            return .green
+        } else {
+            return darkGreen
         }
+    }
     
     var body: some View {
         VStack {
@@ -283,7 +367,7 @@ struct FPSIndicator: View {
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(textColor)
                     .padding(.top, 80)
-
+                
             }
         }
         .padding()
@@ -298,14 +382,14 @@ struct tempIndicator: View {
     let maxTemp: Double = 90
     
     var color: Color {
-            if temp < 28 {
-                return .blue
-            } else if temp >= 28 && temp <= 80 {
-                return .green
-            } else {
-                return .red
-            }
+        if temp < 28 {
+            return .blue
+        } else if temp >= 28 && temp <= 80 {
+            return .green
+        } else {
+            return .red
         }
+    }
     
     var body: some View {
         VStack {
@@ -343,7 +427,7 @@ struct tempIndicator: View {
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(textColor)
                     .padding(.top, 80)
-
+                
             }
         }
         .padding()
