@@ -60,8 +60,14 @@ struct ReveyeView: View {
                         } else {
                             
                             if bluetoothManager.canStream {
-                                WebView(url: URL(string: bluetoothManager.device_streamURL)!)
-                                            .edgesIgnoringSafeArea(.all)
+                                VStack {
+                                    Spacer()
+                                                    .frame(height: 50)
+                                    WebView(url: URL(string: bluetoothManager.device_streamURL)!)
+                                                .edgesIgnoringSafeArea(.all)
+                                                .background(darkGray) 
+                                }
+                                
                             }
                                 
                             
